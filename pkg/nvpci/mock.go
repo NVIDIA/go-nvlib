@@ -53,7 +53,7 @@ func (m *MockNvpci) Cleanup() {
 	os.RemoveAll(m.pciDevicesRoot)
 }
 
-func (m *MockNvpci) AddMockA100(address string) error {
+func (m *MockNvpci) AddMockA100(address string, numaNode int) error {
 	deviceDir := filepath.Join(m.pciDevicesRoot, address)
 	err := os.MkdirAll(deviceDir, 0755)
 	if err != nil {
@@ -83,6 +83,15 @@ func (m *MockNvpci) AddMockA100(address string) error {
 		return err
 	}
 	_, err = device.WriteString("0x20bf")
+	if err != nil {
+		return err
+	}
+
+	numa, err := os.Create(filepath.Join(deviceDir, "numa_node"))
+	if err != nil {
+		return err
+	}
+	_, err = numa.WriteString(fmt.Sprintf("%v", numaNode))
 	if err != nil {
 		return err
 	}
