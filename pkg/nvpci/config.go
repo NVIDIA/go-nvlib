@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/bytes"
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/bytes"
 )
 
 const (

@@ -22,7 +22,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/bytes"
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/bytes"
 )
 
 type Mmio interface {

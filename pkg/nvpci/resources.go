@@ -19,7 +19,7 @@ package nvpci
 import (
 	"fmt"
 
-	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/mmio"
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/mmio"
 )
 
 const (

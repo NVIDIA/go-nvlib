@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/bytes"
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/bytes"
 )
 
 type MockA100 struct {
