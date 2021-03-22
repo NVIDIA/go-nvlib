@@ -25,17 +25,13 @@ import (
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/bytes"
 )
 
-type MockA100 struct {
+type MockNvpci struct {
 	*nvpci
 }
 
-func (m *MockA100) Cleanup() {
-	os.RemoveAll(m.pciDevicesRoot)
-}
+var _ Interface = (*MockNvpci)(nil)
 
-var _ Interface = (*MockA100)(nil)
-
-func NewMockA100() (mock *MockA100, rerr error) {
+func NewMockNvpci() (mock *MockNvpci, rerr error) {
 	rootDir, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, err
@@ -46,42 +42,63 @@ func NewMockA100() (mock *MockA100, rerr error) {
 		}
 	}()
 
-	deviceDir := filepath.Join(rootDir, "0000:80:05.1")
-	err = os.MkdirAll(deviceDir, 0755)
+	mock = &MockNvpci{
+		&nvpci{rootDir},
+	}
+
+	return mock, nil
+}
+
+func (m *MockNvpci) Cleanup() {
+	os.RemoveAll(m.pciDevicesRoot)
+}
+
+func (m *MockNvpci) AddMockA100(address string, numaNode int) error {
+	deviceDir := filepath.Join(m.pciDevicesRoot, address)
+	err := os.MkdirAll(deviceDir, 0755)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	vendor, err := os.Create(filepath.Join(deviceDir, "vendor"))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_, err = vendor.WriteString(fmt.Sprintf("0x%x", pciNvidiaVendorID))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	class, err := os.Create(filepath.Join(deviceDir, "class"))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_, err = class.WriteString(fmt.Sprintf("0x%x", pci3dControllerClass))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	device, err := os.Create(filepath.Join(deviceDir, "device"))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_, err = device.WriteString("0x20bf")
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	numa, err := os.Create(filepath.Join(deviceDir, "numa_node"))
+	if err != nil {
+		return err
+	}
+	_, err = numa.WriteString(fmt.Sprintf("%v", numaNode))
+	if err != nil {
+		return err
 	}
 
 	config, err := os.Create(filepath.Join(deviceDir, "config"))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_data := make([]byte, pciCfgSpaceStandardSize)
 	data := bytes.New(&_data)
@@ -89,32 +106,28 @@ func NewMockA100() (mock *MockA100, rerr error) {
 	data.Write16(2, uint16(0x20bf))
 	_, err = config.Write(*data.Raw())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	bar0 := []uint64{0x00000000c2000000, 0x00000000c2ffffff, 0x0000000000040200}
 	resource, err := os.Create(filepath.Join(deviceDir, "resource"))
 	_, err = resource.WriteString(fmt.Sprintf("0x%x 0x%x 0x%x", bar0[0], bar0[1], bar0[2]))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	pmcID := uint32(0x170000a1)
 	resource0, err := os.Create(filepath.Join(deviceDir, "resource0"))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_data = make([]byte, bar0[1]-bar0[0]+1)
 	data = bytes.New(&_data).LittleEndian()
 	data.Write32(0, pmcID)
 	_, err = resource0.Write(*data.Raw())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	mock = &MockA100{
-		&nvpci{rootDir},
-	}
-
-	return mock, nil
+	return nil
 }

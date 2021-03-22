@@ -27,14 +27,19 @@ const (
 )
 
 func TestNvpci(t *testing.T) {
-	nvpci, err := NewMockA100()
-	require.Nil(t, err, "Error creating NewMockA100")
+	nvpci, err := NewMockNvpci()
+	require.Nil(t, err, "Error creating NewMockNvpci")
 	defer nvpci.Cleanup()
+
+	err = nvpci.AddMockA100("0000:80:05.1", 0)
+	require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
 
 	devices, err := nvpci.GetGPUs()
 	require.Nil(t, err, "Error getting GPUs")
 	require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
 	require.Equal(t, 1, len(devices[0].Resources), "Wrong number GPU resources found")
+	require.Equal(t, "0000:80:05.1", devices[0].Address, "Wrong Address found for device")
+	require.Equal(t, 0, devices[0].NumaNode, "Wrong NUMA node found for device")
 
 	config, err := devices[0].Config.Read()
 	require.Nil(t, err, "Error reading config")
@@ -57,4 +62,40 @@ func TestNvpci(t *testing.T) {
 	}()
 	require.Equal(t, int(resource0.End-resource0.Start+1), bar0.Len())
 	require.Equal(t, ga100PmcID, bar0.Read32(0))
+}
+
+func TestNvpciNUMANode(t *testing.T) {
+	testCases := []struct {
+		Description string
+		NumaNode    int
+	}{
+		{
+			Description: "Numa Node -1",
+			NumaNode:    -1,
+		},
+		{
+			Description: "Numa Node 0",
+			NumaNode:    0,
+		},
+		{
+			Description: "Numa Node 1",
+			NumaNode:    1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Description, func(t *testing.T) {
+			nvpci, err := NewMockNvpci()
+			require.Nil(t, err, "Error creating NewMockNvpci")
+			defer nvpci.Cleanup()
+
+			err = nvpci.AddMockA100("0000:80:05.1", tc.NumaNode)
+			require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+			devices, err := nvpci.GetGPUs()
+			require.Nil(t, err, "Error getting GPUs")
+			require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
+			require.Equal(t, tc.NumaNode, devices[0].NumaNode, "Wrong NUMA node found for device")
+		})
+	}
 }
