@@ -61,6 +61,7 @@ type NvidiaPCIDevice struct {
 	Vendor    uint16
 	Class     uint32
 	Device    uint16
+	NumaNode  int
 	Config    *ConfigSpace
 	Resources map[int]*MemoryResource
 }
@@ -147,6 +148,16 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 			return nil, fmt.Errorf("unable to convert device string to uint16: %v", deviceStr)
 		}
 
+		numa, err := ioutil.ReadFile(path.Join(devicePath, "numa_node"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to read PCI NUMA node for %s: %v", address, err)
+		}
+		numaStr := strings.TrimSpace(string(numa))
+		numaNode, err := strconv.ParseInt(numaStr, 0, 64)
+		if err != nil {
+			return nil, fmt.Errorf("unable to convert NUMA node string to int64: %v", numaNode)
+		}
+
 		config := &ConfigSpace{
 			Path: path.Join(devicePath, "config"),
 		}
@@ -183,6 +194,7 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 			Vendor:    uint16(vendorID),
 			Class:     uint32(classID),
 			Device:    uint16(deviceID),
+			NumaNode:  int(numaNode),
 			Config:    config,
 			Resources: resources,
 		}
