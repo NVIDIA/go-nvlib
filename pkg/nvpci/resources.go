@@ -28,6 +28,7 @@ const (
 	pmcBigEndian      = 0x01000001
 )
 
+// MemoryResource represents a mmio region
 type MemoryResource struct {
 	Start uintptr
 	End   uintptr
@@ -35,10 +36,11 @@ type MemoryResource struct {
 	Path  string
 }
 
+// Open read write mmio region
 func (mr *MemoryResource) Open() (mmio.Mmio, error) {
 	rw, err := mmio.OpenRW(mr.Path, 0, int(mr.End-mr.Start+1))
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file for mmio: %v\n", err)
+		return nil, fmt.Errorf("failed to open file for mmio: %v", err)
 	}
 	switch rw.Read32(pmcEndianRegister) {
 	case pmcBigEndian:
@@ -46,13 +48,14 @@ func (mr *MemoryResource) Open() (mmio.Mmio, error) {
 	case pmcLittleEndian:
 		return rw.LittleEndian(), nil
 	}
-	return nil, fmt.Errorf("unknown endianness for mmio: %v\n", err)
+	return nil, fmt.Errorf("unknown endianness for mmio: %v", err)
 }
 
+// OpenReadOnly read only mmio region
 func (mr *MemoryResource) OpenReadOnly() (mmio.Mmio, error) {
 	ro, err := mmio.OpenRO(mr.Path, 0, int(mr.End-mr.Start+1))
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file for mmio: %v\n", err)
+		return nil, fmt.Errorf("failed to open file for mmio: %v", err)
 	}
 	switch ro.Read32(pmcEndianRegister) {
 	case pmcBigEndian:
@@ -60,5 +63,5 @@ func (mr *MemoryResource) OpenReadOnly() (mmio.Mmio, error) {
 	case pmcLittleEndian:
 		return ro.LittleEndian(), nil
 	}
-	return nil, fmt.Errorf("unknown endianness for mmio: %v\n", err)
+	return nil, fmt.Errorf("unknown endianness for mmio: %v", err)
 }

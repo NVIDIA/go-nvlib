@@ -66,30 +66,34 @@ type NvidiaPCIDevice struct {
 	Resources map[int]*MemoryResource
 }
 
+// IsVGAController if class == 0x300
 func (d *NvidiaPCIDevice) IsVGAController() bool {
 	return d.Class == pciVgaControllerClass
 }
 
+// Is3DController if class == 0x302
 func (d *NvidiaPCIDevice) Is3DController() bool {
 	return d.Class == pci3dControllerClass
 }
 
+// IsNVSwitch if classe == 0x068
 func (d *NvidiaPCIDevice) IsNVSwitch() bool {
 	return d.Class == pciNvSwitchClass
 }
 
+// IsGPU either VGA for older cards or 3D for newer
 func (d *NvidiaPCIDevice) IsGPU() bool {
 	return d.IsVGAController() || d.Is3DController()
 }
 
+// IsResetAvailable some devices can be reset without rebooting,
+// check if applicable
 func (d *NvidiaPCIDevice) IsResetAvailable() bool {
 	_, err := os.Stat(path.Join(d.Path, "reset"))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
+// Reset perform a reset to apply a new configuration at HW level
 func (d *NvidiaPCIDevice) Reset() error {
 	err := ioutil.WriteFile(path.Join(d.Path, "reset"), []byte("1"), 0)
 	if err != nil {
@@ -98,6 +102,7 @@ func (d *NvidiaPCIDevice) Reset() error {
 	return nil
 }
 
+// New interface that allows us to get a list of all NVIDIA PCI devices
 func New() Interface {
 	return &nvpci{pciDevicesRoot}
 }
@@ -202,7 +207,7 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 		nvdevices = append(nvdevices, nvdevice)
 	}
 
-	addressToId := func(address string) uint64 {
+	addressToID := func(address string) uint64 {
 		address = strings.ReplaceAll(address, ":", "")
 		address = strings.ReplaceAll(address, ".", "")
 		id, _ := strconv.ParseUint(address, 16, 64)
@@ -210,7 +215,7 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 	}
 
 	sort.Slice(nvdevices, func(i, j int) bool {
-		return addressToId(nvdevices[i].Address) < addressToId(nvdevices[j].Address)
+		return addressToID(nvdevices[i].Address) < addressToID(nvdevices[j].Address)
 	})
 
 	return nvdevices, nil

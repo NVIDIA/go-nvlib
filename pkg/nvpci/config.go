@@ -29,10 +29,12 @@ const (
 	pciCapabilityListPointer = 0x34
 )
 
+// ConfigSpace PCI configuration space (standard extended) file path
 type ConfigSpace struct {
 	Path string
 }
 
+// ConfigSpaceIO Interface for reading and writing raw and preconfigured values
 type ConfigSpaceIO interface {
 	bytes.Bytes
 	GetVendorID() uint16
@@ -44,15 +46,18 @@ type configSpaceIO struct {
 	bytes.Bytes
 }
 
+// PCIStandardCapability standard PCI config space
 type PCIStandardCapability struct {
 	bytes.Bytes
 }
 
+// PCIExtendedCapability extended PCI config space
 type PCIExtendedCapability struct {
 	bytes.Bytes
 	Version uint8
 }
 
+// PCICapabilities combines the standard and extended config space
 type PCICapabilities struct {
 	Standard map[uint8]*PCIStandardCapability
 	Extended map[uint16]*PCIExtendedCapability

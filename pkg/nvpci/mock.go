@@ -25,12 +25,14 @@ import (
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/bytes"
 )
 
+// MockNvpci mock pci device
 type MockNvpci struct {
 	*nvpci
 }
 
 var _ Interface = (*MockNvpci)(nil)
 
+// NewMockNvpci create new mock PCI and remove old devices
 func NewMockNvpci() (mock *MockNvpci, rerr error) {
 	rootDir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -49,10 +51,12 @@ func NewMockNvpci() (mock *MockNvpci, rerr error) {
 	return mock, nil
 }
 
+// Cleanup remove the mocked PCI devices root folder
 func (m *MockNvpci) Cleanup() {
 	os.RemoveAll(m.pciDevicesRoot)
 }
 
+// AddMockA100 Create an A100 like GPU mock device
 func (m *MockNvpci) AddMockA100(address string, numaNode int) error {
 	deviceDir := filepath.Join(m.pciDevicesRoot, address)
 	err := os.MkdirAll(deviceDir, 0755)
@@ -111,6 +115,9 @@ func (m *MockNvpci) AddMockA100(address string, numaNode int) error {
 
 	bar0 := []uint64{0x00000000c2000000, 0x00000000c2ffffff, 0x0000000000040200}
 	resource, err := os.Create(filepath.Join(deviceDir, "resource"))
+	if err != nil {
+		return err
+	}
 	_, err = resource.WriteString(fmt.Sprintf("0x%x 0x%x 0x%x", bar0[0], bar0[1], bar0[2]))
 	if err != nil {
 		return err
