@@ -27,6 +27,8 @@ const (
 	pciCfgSpaceStandardSize  = 256
 	pciCfgSpaceExtendedSize  = 4096
 	pciCapabilityListPointer = 0x34
+	pciStatusCapabilityList  = 0x10
+	pciStatusBytePosition    = 0x06
 )
 
 // ConfigSpace PCI configuration space (standard extended) file path
@@ -83,6 +85,11 @@ func (cs *configSpaceIO) GetPCICapabilities() (*PCICapabilities, error) {
 	caps := &PCICapabilities{
 		make(map[uint8]*PCIStandardCapability),
 		make(map[uint16]*PCIExtendedCapability),
+	}
+
+	support := cs.Read8(pciStatusBytePosition) & pciStatusCapabilityList
+	if support == 0 {
+		return nil, fmt.Errorf("pci device does not support capability list")
 	}
 
 	soffset := cs.Read8(pciCapabilityListPointer)

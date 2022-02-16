@@ -108,6 +108,7 @@ func (m *MockNvpci) AddMockA100(address string, numaNode int) error {
 	data := bytes.New(&_data)
 	data.Write16(0, pciNvidiaVendorID)
 	data.Write16(2, uint16(0x20bf))
+	data.Write8(pciStatusBytePosition, pciStatusCapabilityList)
 	_, err = config.Write(*data.Raw())
 	if err != nil {
 		return err
