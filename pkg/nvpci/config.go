@@ -27,12 +27,16 @@ const (
 	pciCfgSpaceStandardSize  = 256
 	pciCfgSpaceExtendedSize  = 4096
 	pciCapabilityListPointer = 0x34
+	pciStatusCapabilityList  = 0x10
+	pciStatusBytePosition    = 0x06
 )
 
+// ConfigSpace PCI configuration space (standard extended) file path
 type ConfigSpace struct {
 	Path string
 }
 
+// ConfigSpaceIO Interface for reading and writing raw and preconfigured values
 type ConfigSpaceIO interface {
 	bytes.Bytes
 	GetVendorID() uint16
@@ -44,15 +48,18 @@ type configSpaceIO struct {
 	bytes.Bytes
 }
 
+// PCIStandardCapability standard PCI config space
 type PCIStandardCapability struct {
 	bytes.Bytes
 }
 
+// PCIExtendedCapability extended PCI config space
 type PCIExtendedCapability struct {
 	bytes.Bytes
 	Version uint8
 }
 
+// PCICapabilities combines the standard and extended config space
 type PCICapabilities struct {
 	Standard map[uint8]*PCIStandardCapability
 	Extended map[uint16]*PCIExtendedCapability
@@ -78,6 +85,11 @@ func (cs *configSpaceIO) GetPCICapabilities() (*PCICapabilities, error) {
 	caps := &PCICapabilities{
 		make(map[uint8]*PCIStandardCapability),
 		make(map[uint16]*PCIExtendedCapability),
+	}
+
+	support := cs.Read8(pciStatusBytePosition) & pciStatusCapabilityList
+	if support == 0 {
+		return nil, fmt.Errorf("pci device does not support capability list")
 	}
 
 	soffset := cs.Read8(pciCapabilityListPointer)

@@ -52,7 +52,7 @@ func TestNvpci(t *testing.T) {
 	require.Equal(t, 0, len(capabilities.Extended), "Wrong number of extended PCI capabilities")
 
 	resource0 := devices[0].Resources[0]
-	bar0, err := resource0.Open()
+	bar0, err := resource0.OpenRW()
 	require.Nil(t, err, "Error opening bar0")
 	defer func() {
 		err := bar0.Close()
