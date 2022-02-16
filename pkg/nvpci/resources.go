@@ -36,8 +36,8 @@ type MemoryResource struct {
 	Path  string
 }
 
-// Open read write mmio region
-func (mr *MemoryResource) Open() (mmio.Mmio, error) {
+// OpenRW read write mmio region
+func (mr *MemoryResource) OpenRW() (mmio.Mmio, error) {
 	rw, err := mmio.OpenRW(mr.Path, 0, int(mr.End-mr.Start+1))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for mmio: %v", err)
@@ -51,8 +51,8 @@ func (mr *MemoryResource) Open() (mmio.Mmio, error) {
 	return nil, fmt.Errorf("unknown endianness for mmio: %v", err)
 }
 
-// OpenReadOnly read only mmio region
-func (mr *MemoryResource) OpenReadOnly() (mmio.Mmio, error) {
+// OpenRO read only mmio region
+func (mr *MemoryResource) OpenRO() (mmio.Mmio, error) {
 	ro, err := mmio.OpenRO(mr.Path, 0, int(mr.End-mr.Start+1))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for mmio: %v", err)
