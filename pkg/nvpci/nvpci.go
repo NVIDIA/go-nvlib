@@ -48,11 +48,20 @@ type Interface interface {
 	GetGPUs() ([]*NvidiaPCIDevice, error)
 }
 
+// MemoryResources a more human readable handle
+type MemoryResources map[int]*MemoryResource
+
+// ResourceInterface exposes some higher level functions of resources
+type ResourceInterface interface {
+	GetTotalAddressableMemory(bool) (uint64, uint64)
+}
+
 type nvpci struct {
 	pciDevicesRoot string
 }
 
 var _ Interface = (*nvpci)(nil)
+var _ ResourceInterface = (*MemoryResources)(nil)
 
 // NvidiaPCIDevice represents a PCI device for an NVIDIA product
 type NvidiaPCIDevice struct {
@@ -63,7 +72,7 @@ type NvidiaPCIDevice struct {
 	Device    uint16
 	NumaNode  int
 	Config    *ConfigSpace
-	Resources map[int]*MemoryResource
+	Resources MemoryResources
 }
 
 // IsVGAController if class == 0x300
