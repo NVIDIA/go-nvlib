@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -69,6 +70,7 @@ type NvidiaPCIDevice struct {
 	Vendor    uint16
 	Class     uint32
 	Device    uint16
+	Driver    string
 	NumaNode  int
 	Config    *ConfigSpace
 	Resources MemoryResources
@@ -192,6 +194,15 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, fmt.Errorf("unable to convert device string to uint16: %v", deviceStr)
 	}
 
+	driver, err := filepath.EvalSymlinks(path.Join(devicePath, "driver"))
+	if err == nil {
+		driver = filepath.Base(driver)
+	} else if os.IsNotExist(err) {
+		driver = ""
+	} else {
+		return nil, fmt.Errorf("unable to detect driver for %s: %v", address, err)
+	}
+
 	numa, err := os.ReadFile(path.Join(devicePath, "numa_node"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI NUMA node for %s: %v", address, err)
@@ -238,6 +249,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		Vendor:    uint16(vendorID),
 		Class:     uint32(classID),
 		Device:    uint16(deviceID),
+		Driver:    driver,
 		NumaNode:  int(numaNode),
 		Config:    config,
 		Resources: resources,
