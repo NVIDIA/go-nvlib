@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci"
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -34,7 +33,7 @@ var _ Interface = (*MockNvmdev)(nil)
 
 // NewMock creates new mock mediated (vGPU) and parent PCI devices and removes old devices
 func NewMock() (mock *MockNvmdev, rerr error) {
-	mdevParentsRootDir, err := ioutil.TempDir("", "")
+	mdevParentsRootDir, err := os.MkdirTemp(os.TempDir(), "")
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +42,7 @@ func NewMock() (mock *MockNvmdev, rerr error) {
 			os.RemoveAll(mdevParentsRootDir)
 		}
 	}()
-	mdevDevicesRootDir, err := ioutil.TempDir("", "")
+	mdevDevicesRootDir, err := os.MkdirTemp(os.TempDir(), "")
 	if err != nil {
 		return nil, err
 	}
