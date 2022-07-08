@@ -56,6 +56,7 @@ type Device struct {
 	Path     string
 	UUID     string
 	MDEVType string
+	Driver   string
 	Parent   *ParentDevice
 }
 
@@ -143,10 +144,16 @@ func NewDevice(root string, uuid string) (*Device, error) {
 		return nil, fmt.Errorf("error getting mdev type: %v", err)
 	}
 
+	driver, err := m.driver()
+	if err != nil {
+		return nil, fmt.Errorf("error detecting driver: %v", err)
+	}
+
 	device := Device{
 		Path:     path,
 		UUID:     uuid,
 		MDEVType: mdevType,
+		Driver:   driver,
 		Parent:   parent,
 	}
 
@@ -191,6 +198,14 @@ func (m mdev) Type() (string, error) {
 	}
 
 	return mdevTypeSplit[1], nil
+}
+
+func (m mdev) driver() (string, error) {
+	driver, err := filepath.EvalSymlinks(path.Join(string(m), "driver"))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Base(driver), nil
 }
 
 // NewParentDevice constructs a ParentDevice

@@ -46,4 +46,5 @@ func TestNvmdev(t *testing.T) {
 	mdevs, err := nvmdev.GetAllDevices()
 	require.Nil(t, err, "Error getting NVIDIA MDEV (vGPU) devices")
 	require.Equal(t, 1, len(mdevs), "Wrong number of NVIDIA MDEV (vGPU) devices")
+	require.Equal(t, "vfio_mdev", mdevs[0].Driver, "Wrong driver detected for mdev device")
 }

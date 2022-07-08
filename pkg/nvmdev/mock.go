@@ -196,6 +196,15 @@ func (m *MockNvmdev) AddMockA100Mdev(uuid string, mdevType string, mdevTypeDir s
 		return err
 	}
 
+	_, err = os.Create(filepath.Join(mdevDeviceDir, "vfio_mdev"))
+	if err != nil {
+		return err
+	}
+	err = os.Symlink(filepath.Join(mdevDeviceDir, "vfio_mdev"), filepath.Join(mdevDeviceDir, "driver"))
+	if err != nil {
+		return err
+	}
+
 	err = os.Symlink(mdevDeviceDir, filepath.Join(m.mdevDevicesRoot, uuid))
 	if err != nil {
 		return err
