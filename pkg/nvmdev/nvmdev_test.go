@@ -18,7 +18,6 @@ package nvmdev
 
 import (
 	"github.com/stretchr/testify/require"
-	"path/filepath"
 	"testing"
 )
 
@@ -41,8 +40,7 @@ func TestNvmdev(t *testing.T) {
 	require.Nil(t, err, "Error checking if A100-4Q vGPU type is available for creation")
 	require.True(t, available, "A100-4C should be available to create")
 
-	err = nvmdev.AddMockA100Mdev("b1914f0a-15cf-416e-8967-55fc7cb68e20", "A100-4C",
-		filepath.Join(parentDevs[0].Path, "mdev_supported_types/nvidia-500"))
+	err = nvmdev.AddMockA100Mdev("b1914f0a-15cf-416e-8967-55fc7cb68e20", "A100-4C", "nvidia-500", parentDevs[0].Path)
 	require.Nil(t, err, "Error adding Mock A100 mediated device")
 
 	mdevs, err := nvmdev.GetAllDevices()

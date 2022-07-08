@@ -153,27 +153,33 @@ func NewDevice(root string, uuid string) (*Device, error) {
 	return &device, nil
 }
 
+// mdev represents the path to an NVIDIA mdev (vGPU) device.
 type mdev string
 
 func newMdev(devicePath string) (mdev, error) {
-	mdevTypeDir, err := filepath.EvalSymlinks(path.Join(devicePath, "mdev_type"))
+	mdevDir, err := filepath.EvalSymlinks(devicePath)
 	if err != nil {
-		return "", fmt.Errorf("error resolving mdev_type link: %v", err)
+		return "", fmt.Errorf("error resolving symlink for %s: %v", devicePath, err)
 	}
 
-	return mdev(mdevTypeDir), nil
+	return mdev(mdevDir), nil
 }
 
 func (m mdev) String() string {
 	return string(m)
 }
 func (m mdev) parentDevicePath() string {
-	// /sys/bus/pci/devices/<addr>/mdev_supported_types/<mdev_type>
-	return path.Dir(path.Dir(string(m)))
+	// /sys/bus/pci/devices/<addr>/<uuid>
+	return path.Dir(string(m))
 }
 
 func (m mdev) Type() (string, error) {
-	mdevType, err := os.ReadFile(path.Join(string(m), "name"))
+	mdevTypeDir, err := filepath.EvalSymlinks(path.Join(string(m), "mdev_type"))
+	if err != nil {
+		return "", fmt.Errorf("error resolving mdev_type link for mdev %s: %v", m, err)
+	}
+
+	mdevType, err := os.ReadFile(path.Join(mdevTypeDir, "name"))
 	if err != nil {
 		return "", fmt.Errorf("unable to read mdev_type name for mdev %s: %v", m, err)
 	}
