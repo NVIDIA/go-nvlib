@@ -16,7 +16,7 @@ MODULE := gitlab.com/nvidia/cloud-native/go-nvlib
 
 DOCKER ?= docker
 
-GOLANG_VERSION := 1.15
+GOLANG_VERSION := 1.16
 
 ifeq ($(IMAGE),)
 REGISTRY ?= nvidia
