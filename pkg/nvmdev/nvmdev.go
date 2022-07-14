@@ -19,7 +19,6 @@ package nvmdev
 import (
 	"fmt"
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,6 +56,7 @@ type Device struct {
 	Path     string
 	UUID     string
 	MDEVType string
+	Driver   string
 	Parent   *ParentDevice
 }
 
@@ -67,7 +67,7 @@ func New() Interface {
 
 // GetAllParentDevices returns all NVIDIA Parent PCI devices on the system
 func (m *nvmdev) GetAllParentDevices() ([]*ParentDevice, error) {
-	deviceDirs, err := ioutil.ReadDir(m.mdevParentsRoot)
+	deviceDirs, err := os.ReadDir(m.mdevParentsRoot)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI bus devices: %v", err)
 	}
@@ -101,7 +101,7 @@ func (m *nvmdev) GetAllParentDevices() ([]*ParentDevice, error) {
 
 // GetAllDevices returns all NVIDIA mdev (vGPU) devices on the system
 func (m *nvmdev) GetAllDevices() ([]*Device, error) {
-	deviceDirs, err := ioutil.ReadDir(m.mdevDevicesRoot)
+	deviceDirs, err := os.ReadDir(m.mdevDevicesRoot)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read MDEV devices directory: %v", err)
 	}
@@ -144,37 +144,49 @@ func NewDevice(root string, uuid string) (*Device, error) {
 		return nil, fmt.Errorf("error getting mdev type: %v", err)
 	}
 
+	driver, err := m.driver()
+	if err != nil {
+		return nil, fmt.Errorf("error detecting driver: %v", err)
+	}
+
 	device := Device{
 		Path:     path,
 		UUID:     uuid,
 		MDEVType: mdevType,
+		Driver:   driver,
 		Parent:   parent,
 	}
 
 	return &device, nil
 }
 
+// mdev represents the path to an NVIDIA mdev (vGPU) device.
 type mdev string
 
 func newMdev(devicePath string) (mdev, error) {
-	mdevTypeDir, err := filepath.EvalSymlinks(path.Join(devicePath, "mdev_type"))
+	mdevDir, err := filepath.EvalSymlinks(devicePath)
 	if err != nil {
-		return "", fmt.Errorf("error resolving mdev_type link: %v", err)
+		return "", fmt.Errorf("error resolving symlink for %s: %v", devicePath, err)
 	}
 
-	return mdev(mdevTypeDir), nil
+	return mdev(mdevDir), nil
 }
 
 func (m mdev) String() string {
 	return string(m)
 }
 func (m mdev) parentDevicePath() string {
-	// /sys/bus/pci/devices/<addr>/mdev_supported_types/<mdev_type>
-	return path.Dir(path.Dir(string(m)))
+	// /sys/bus/pci/devices/<addr>/<uuid>
+	return path.Dir(string(m))
 }
 
 func (m mdev) Type() (string, error) {
-	mdevType, err := ioutil.ReadFile(path.Join(string(m), "name"))
+	mdevTypeDir, err := filepath.EvalSymlinks(path.Join(string(m), "mdev_type"))
+	if err != nil {
+		return "", fmt.Errorf("error resolving mdev_type link for mdev %s: %v", m, err)
+	}
+
+	mdevType, err := os.ReadFile(path.Join(mdevTypeDir, "name"))
 	if err != nil {
 		return "", fmt.Errorf("unable to read mdev_type name for mdev %s: %v", m, err)
 	}
@@ -186,6 +198,14 @@ func (m mdev) Type() (string, error) {
 	}
 
 	return mdevTypeSplit[1], nil
+}
+
+func (m mdev) driver() (string, error) {
+	driver, err := filepath.EvalSymlinks(path.Join(string(m), "driver"))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Base(driver), nil
 }
 
 // NewParentDevice constructs a ParentDevice
@@ -205,7 +225,7 @@ func NewParentDevice(devicePath string) (*ParentDevice, error) {
 	}
 	mdevTypesMap := make(map[string]string)
 	for _, path := range paths {
-		name, err := ioutil.ReadFile(path)
+		name, err := os.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read file %s: %v", path, err)
 		}
@@ -292,7 +312,7 @@ func (p *ParentDevice) GetAvailableMDEVInstances(mdevType string) (int, error) {
 		return -1, nil
 	}
 
-	available, err := ioutil.ReadFile(filepath.Join(mdevPath, "available_instances"))
+	available, err := os.ReadFile(filepath.Join(mdevPath, "available_instances"))
 	if err != nil {
 		return -1, fmt.Errorf("unable to read available_instances file: %v", err)
 	}

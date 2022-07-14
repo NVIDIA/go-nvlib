@@ -18,9 +18,9 @@ package nvpci
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,6 +70,7 @@ type NvidiaPCIDevice struct {
 	Vendor    uint16
 	Class     uint32
 	Device    uint16
+	Driver    string
 	NumaNode  int
 	Config    *ConfigSpace
 	Resources MemoryResources
@@ -104,7 +105,7 @@ func (d *NvidiaPCIDevice) IsResetAvailable() bool {
 
 // Reset perform a reset to apply a new configuration at HW level
 func (d *NvidiaPCIDevice) Reset() error {
-	err := ioutil.WriteFile(path.Join(d.Path, "reset"), []byte("1"), 0)
+	err := os.WriteFile(path.Join(d.Path, "reset"), []byte("1"), 0)
 	if err != nil {
 		return fmt.Errorf("unable to write to reset file: %v", err)
 	}
@@ -123,7 +124,7 @@ func NewFrom(root string) Interface {
 
 // GetAllDevices returns all Nvidia PCI devices on the system
 func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
-	deviceDirs, err := ioutil.ReadDir(p.pciDevicesRoot)
+	deviceDirs, err := os.ReadDir(p.pciDevicesRoot)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI bus devices: %v", err)
 	}
@@ -159,7 +160,7 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 	address := path.Base(devicePath)
 
-	vendor, err := ioutil.ReadFile(path.Join(devicePath, "vendor"))
+	vendor, err := os.ReadFile(path.Join(devicePath, "vendor"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI device vendor id for %s: %v", address, err)
 	}
@@ -173,7 +174,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, nil
 	}
 
-	class, err := ioutil.ReadFile(path.Join(devicePath, "class"))
+	class, err := os.ReadFile(path.Join(devicePath, "class"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI device class for %s: %v", address, err)
 	}
@@ -183,7 +184,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, fmt.Errorf("unable to convert class string to uint32: %v", classStr)
 	}
 
-	device, err := ioutil.ReadFile(path.Join(devicePath, "device"))
+	device, err := os.ReadFile(path.Join(devicePath, "device"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI device id for %s: %v", address, err)
 	}
@@ -193,7 +194,16 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, fmt.Errorf("unable to convert device string to uint16: %v", deviceStr)
 	}
 
-	numa, err := ioutil.ReadFile(path.Join(devicePath, "numa_node"))
+	driver, err := filepath.EvalSymlinks(path.Join(devicePath, "driver"))
+	if err == nil {
+		driver = filepath.Base(driver)
+	} else if os.IsNotExist(err) {
+		driver = ""
+	} else {
+		return nil, fmt.Errorf("unable to detect driver for %s: %v", address, err)
+	}
+
+	numa, err := os.ReadFile(path.Join(devicePath, "numa_node"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI NUMA node for %s: %v", address, err)
 	}
@@ -207,7 +217,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		Path: path.Join(devicePath, "config"),
 	}
 
-	resource, err := ioutil.ReadFile(path.Join(devicePath, "resource"))
+	resource, err := os.ReadFile(path.Join(devicePath, "resource"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI resource file for %s: %v", address, err)
 	}
@@ -239,6 +249,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		Vendor:    uint16(vendorID),
 		Class:     uint32(classID),
 		Device:    uint16(deviceID),
+		Driver:    driver,
 		NumaNode:  int(numaNode),
 		Config:    config,
 		Resources: resources,
