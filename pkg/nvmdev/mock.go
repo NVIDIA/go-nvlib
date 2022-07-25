@@ -100,6 +100,24 @@ func (m *MockNvmdev) AddMockA100Parent(address string, numaNode int) error {
 		return err
 	}
 
+	_, err = os.Create(filepath.Join(deviceDir, "nvidia"))
+	if err != nil {
+		return err
+	}
+	err = os.Symlink(filepath.Join(deviceDir, "nvidia"), filepath.Join(deviceDir, "driver"))
+	if err != nil {
+		return err
+	}
+
+	_, err = os.Create(filepath.Join(deviceDir, "20"))
+	if err != nil {
+		return err
+	}
+	err = os.Symlink(filepath.Join(deviceDir, "20"), filepath.Join(deviceDir, "iommu_group"))
+	if err != nil {
+		return err
+	}
+
 	numa, err := os.Create(filepath.Join(deviceDir, "numa_node"))
 	if err != nil {
 		return err
@@ -201,6 +219,12 @@ func (m *MockNvmdev) AddMockA100Mdev(uuid string, mdevType string, mdevTypeDir s
 		return err
 	}
 	err = os.Symlink(filepath.Join(mdevDeviceDir, "vfio_mdev"), filepath.Join(mdevDeviceDir, "driver"))
+
+	_, err = os.Create(filepath.Join(mdevDeviceDir, "200"))
+	if err != nil {
+		return err
+	}
+	err = os.Symlink(filepath.Join(mdevDeviceDir, "200"), filepath.Join(mdevDeviceDir, "iommu_group"))
 	if err != nil {
 		return err
 	}

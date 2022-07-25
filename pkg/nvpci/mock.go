@@ -99,6 +99,15 @@ func (m *MockNvpci) AddMockA100(address string, numaNode int) error {
 		return err
 	}
 
+	_, err = os.Create(filepath.Join(deviceDir, "20"))
+	if err != nil {
+		return err
+	}
+	err = os.Symlink(filepath.Join(deviceDir, "20"), filepath.Join(deviceDir, "iommu_group"))
+	if err != nil {
+		return err
+	}
+
 	numa, err := os.Create(filepath.Join(deviceDir, "numa_node"))
 	if err != nil {
 		return err

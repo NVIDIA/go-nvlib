@@ -53,11 +53,12 @@ type ParentDevice struct {
 
 // Device represents an NVIDIA MDEV (vGPU) device
 type Device struct {
-	Path     string
-	UUID     string
-	MDEVType string
-	Driver   string
-	Parent   *ParentDevice
+	Path       string
+	UUID       string
+	MDEVType   string
+	Driver     string
+	IommuGroup int
+	Parent     *ParentDevice
 }
 
 // New interface that allows us to get a list of all NVIDIA parent and MDEV (vGPU) devices
@@ -149,12 +150,18 @@ func NewDevice(root string, uuid string) (*Device, error) {
 		return nil, fmt.Errorf("error detecting driver: %v", err)
 	}
 
+	iommuGroup, err := m.iommuGroup()
+	if err != nil {
+		return nil, fmt.Errorf("error getting iommu_group: %v", err)
+	}
+
 	device := Device{
-		Path:     path,
-		UUID:     uuid,
-		MDEVType: mdevType,
-		Driver:   driver,
-		Parent:   parent,
+		Path:       path,
+		UUID:       uuid,
+		MDEVType:   mdevType,
+		Driver:     driver,
+		IommuGroup: iommuGroup,
+		Parent:     parent,
 	}
 
 	return &device, nil
@@ -175,15 +182,25 @@ func newMdev(devicePath string) (mdev, error) {
 func (m mdev) String() string {
 	return string(m)
 }
+
+func (m mdev) resolve(target string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(path.Join(string(m), target))
+	if err != nil {
+		return "", fmt.Errorf("error resolving %q: %v", target, err)
+	}
+
+	return resolved, nil
+}
+
 func (m mdev) parentDevicePath() string {
 	// /sys/bus/pci/devices/<addr>/<uuid>
 	return path.Dir(string(m))
 }
 
 func (m mdev) Type() (string, error) {
-	mdevTypeDir, err := filepath.EvalSymlinks(path.Join(string(m), "mdev_type"))
+	mdevTypeDir, err := m.resolve("mdev_type")
 	if err != nil {
-		return "", fmt.Errorf("error resolving mdev_type link for mdev %s: %v", m, err)
+		return "", err
 	}
 
 	mdevType, err := os.ReadFile(path.Join(mdevTypeDir, "name"))
@@ -201,11 +218,25 @@ func (m mdev) Type() (string, error) {
 }
 
 func (m mdev) driver() (string, error) {
-	driver, err := filepath.EvalSymlinks(path.Join(string(m), "driver"))
+	driver, err := m.resolve("driver")
 	if err != nil {
 		return "", err
 	}
 	return filepath.Base(driver), nil
+}
+
+func (m mdev) iommuGroup() (int, error) {
+	iommu, err := m.resolve("iommu_group")
+	if err != nil {
+		return -1, err
+	}
+	iommuGroupStr := strings.TrimSpace(filepath.Base(iommu))
+	iommuGroup, err := strconv.ParseInt(iommuGroupStr, 0, 64)
+	if err != nil {
+		return -1, fmt.Errorf("unable to convert iommu_group string to int64: %v", iommuGroupStr)
+	}
+
+	return int(iommuGroup), nil
 }
 
 // NewParentDevice constructs a ParentDevice

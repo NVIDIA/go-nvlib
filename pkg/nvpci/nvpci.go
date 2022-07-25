@@ -65,15 +65,16 @@ var _ ResourceInterface = (*MemoryResources)(nil)
 
 // NvidiaPCIDevice represents a PCI device for an NVIDIA product
 type NvidiaPCIDevice struct {
-	Path      string
-	Address   string
-	Vendor    uint16
-	Class     uint32
-	Device    uint16
-	Driver    string
-	NumaNode  int
-	Config    *ConfigSpace
-	Resources MemoryResources
+	Path       string
+	Address    string
+	Vendor     uint16
+	Class      uint32
+	Device     uint16
+	Driver     string
+	IommuGroup int
+	NumaNode   int
+	Config     *ConfigSpace
+	Resources  MemoryResources
 }
 
 // IsVGAController if class == 0x300
@@ -203,6 +204,20 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, fmt.Errorf("unable to detect driver for %s: %v", address, err)
 	}
 
+	var iommuGroup int64
+	iommu, err := filepath.EvalSymlinks(path.Join(devicePath, "iommu_group"))
+	if err == nil {
+		iommuGroupStr := strings.TrimSpace(filepath.Base(iommu))
+		iommuGroup, err = strconv.ParseInt(iommuGroupStr, 0, 64)
+		if err != nil {
+			return nil, fmt.Errorf("unable to convert iommu_group string to int64: %v", iommuGroupStr)
+		}
+	} else if os.IsNotExist(err) {
+		iommuGroup = -1
+	} else {
+		return nil, fmt.Errorf("unable to detect iommu_group for %s: %v", address, err)
+	}
+
 	numa, err := os.ReadFile(path.Join(devicePath, "numa_node"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI NUMA node for %s: %v", address, err)
@@ -244,15 +259,16 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 	}
 
 	nvdevice := &NvidiaPCIDevice{
-		Path:      devicePath,
-		Address:   address,
-		Vendor:    uint16(vendorID),
-		Class:     uint32(classID),
-		Device:    uint16(deviceID),
-		Driver:    driver,
-		NumaNode:  int(numaNode),
-		Config:    config,
-		Resources: resources,
+		Path:       devicePath,
+		Address:    address,
+		Vendor:     uint16(vendorID),
+		Class:      uint32(classID),
+		Device:     uint16(deviceID),
+		Driver:     driver,
+		IommuGroup: int(iommuGroup),
+		NumaNode:   int(numaNode),
+		Config:     config,
+		Resources:  resources,
 	}
 
 	return nvdevice, nil
