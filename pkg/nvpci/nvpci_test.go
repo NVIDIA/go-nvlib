@@ -46,6 +46,7 @@ func TestNvpci(t *testing.T) {
 	require.Equal(t, devices[0].Vendor, config.GetVendorID(), "Vendor IDs do not match")
 	require.Equal(t, devices[0].Device, config.GetDeviceID(), "Device IDs do not match")
 	require.Equal(t, "nvidia", devices[0].Driver, "Wrong driver detected for device")
+	require.Equal(t, 20, devices[0].IommuGroup, "Wrong iommu_group detected for device")
 
 	capabilities, err := config.GetPCICapabilities()
 	require.Nil(t, err, "Error getting PCI capabilities")
