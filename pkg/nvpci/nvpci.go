@@ -75,6 +75,7 @@ type NvidiaPCIDevice struct {
 	NumaNode   int
 	Config     *ConfigSpace
 	Resources  MemoryResources
+	IsVF       bool
 }
 
 // IsVGAController if class == 0x300
@@ -87,7 +88,7 @@ func (d *NvidiaPCIDevice) Is3DController() bool {
 	return d.Class == PCI3dControllerClass
 }
 
-// IsNVSwitch if classe == 0x068
+// IsNVSwitch if class == 0x068
 func (d *NvidiaPCIDevice) IsNVSwitch() bool {
 	return d.Class == PCINvSwitchClass
 }
@@ -218,6 +219,16 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, fmt.Errorf("unable to detect iommu_group for %s: %v", address, err)
 	}
 
+	// device is a virtual function (VF) if "physfn" symlink exists
+	var isVF bool
+	_, err = filepath.EvalSymlinks(path.Join(devicePath, "physfn"))
+	if err == nil {
+		isVF = true
+	}
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("unable to resolve %s: %v", path.Join(devicePath, "physfn"), err)
+	}
+
 	numa, err := os.ReadFile(path.Join(devicePath, "numa_node"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PCI NUMA node for %s: %v", address, err)
@@ -269,6 +280,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		NumaNode:   int(numaNode),
 		Config:     config,
 		Resources:  resources,
+		IsVF:       isVF,
 	}
 
 	return nvdevice, nil
@@ -334,7 +346,7 @@ func (p *nvpci) GetGPUs() ([]*NvidiaPCIDevice, error) {
 
 	var filtered []*NvidiaPCIDevice
 	for _, d := range devices {
-		if d.IsGPU() {
+		if d.IsGPU() && !d.IsVF {
 			filtered = append(filtered, d)
 		}
 	}

@@ -64,6 +64,8 @@ func TestNvpci(t *testing.T) {
 	}()
 	require.Equal(t, int(resource0.End-resource0.Start+1), bar0.Len())
 	require.Equal(t, ga100PmcID, bar0.Read32(0))
+
+	require.Equal(t, devices[0].IsVF, false, "Device incorrectly identified as a VF")
 }
 
 func TestNvpciNUMANode(t *testing.T) {
