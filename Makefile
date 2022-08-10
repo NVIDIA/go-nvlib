@@ -25,7 +25,7 @@ endif
 IMAGE_TAG ?= $(GOLANG_VERSION)
 BUILDIMAGE ?= $(IMAGE):$(IMAGE_TAG)-devel
 
-TARGETS := binary build all check fmt assert-fmt lint vet test
+TARGETS := binary build all check fmt assert-fmt generate lint vet test
 DOCKER_TARGETS := $(patsubst %, docker-%, $(TARGETS))
 .PHONY: $(TARGETS) $(DOCKER_TARGETS)
 
@@ -53,6 +53,9 @@ assert-fmt:
 	else \
 		rm fmt.out; \
 	fi
+
+generate:
+	go generate $(MODULE)/...
 
 lint:
 	# We use `go list -f '{{.Dir}}' $(MODULE)/...` to skip the `vendor` folder.
