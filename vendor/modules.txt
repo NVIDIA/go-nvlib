@@ -1,6 +1,7 @@
 # github.com/NVIDIA/go-nvml v0.11.6-0.0.20220614115128-31f8b89eb740
 ## explicit
 github.com/NVIDIA/go-nvml/pkg/dl
+github.com/NVIDIA/go-nvml/pkg/nvml
 # github.com/davecgh/go-spew v1.1.0
 github.com/davecgh/go-spew/spew
 # github.com/pmezard/go-difflib v1.0.0
