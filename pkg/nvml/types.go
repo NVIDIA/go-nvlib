@@ -20,9 +20,6 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-// Return defines an NVML return type
-type Return nvml.Return
-
 //go:generate moq -out nvml_mock.go . Interface
 // Interface defines the functions implemented by an NVML library
 type Interface interface {
@@ -88,6 +85,9 @@ type ComputeInstanceInfo struct {
 	ProfileId   uint32
 	Placement   ComputeInstancePlacement
 }
+
+// Return defines an NVML return type
+type Return nvml.Return
 
 // Memory holds info about GPU device memory
 type Memory nvml.Memory

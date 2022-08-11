@@ -17,10 +17,15 @@
 package nvml
 
 import (
+	"sync"
+
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-type nvmlLib struct{}
+type nvmlLib struct {
+	sync.Mutex
+	refcount int
+}
 
 var _ Interface = (*nvmlLib)(nil)
 
@@ -31,12 +36,36 @@ func New() Interface {
 
 // Init initializes an NVML Interface
 func (n *nvmlLib) Init() Return {
-	return Return(nvml.Init())
+	ret := nvml.Init()
+	if ret != nvml.SUCCESS {
+		return Return(ret)
+	}
+
+	n.Lock()
+	defer n.Unlock()
+	if n.refcount == 0 {
+		errorStringFunc = nvml.ErrorString
+	}
+	n.refcount += 1
+
+	return SUCCESS
 }
 
 // Shutdown shuts down an NVML Interface
 func (n *nvmlLib) Shutdown() Return {
-	return Return(nvml.Shutdown())
+	ret := nvml.Shutdown()
+	if ret != nvml.SUCCESS {
+		return Return(ret)
+	}
+
+	n.Lock()
+	defer n.Unlock()
+	n.refcount -= 1
+	if n.refcount == 0 {
+		errorStringFunc = defaultErrorStringFunc
+	}
+
+	return SUCCESS
 }
 
 // DeviceGetCount returns the total number of GPU Devices
