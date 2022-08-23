@@ -33,6 +33,11 @@ func TestNvmdev(t *testing.T) {
 	require.Equal(t, 1, len(parentDevs), "Wrong number of parent GPU devices")
 
 	parentA100 := parentDevs[0]
+
+	pf, err := parentA100.GetPhysicalFunction()
+	require.Nil(t, err, "Error getting physical function backing the Mock A100 parent device")
+	require.Equal(t, "0000:3b:04.1", pf.Address, "Wrong address for Mock A100 physical function")
+
 	supported := parentA100.IsMDEVTypeSupported("A100-4C")
 	require.True(t, supported, "A100-4C should be a supported vGPU type")
 
@@ -46,7 +51,14 @@ func TestNvmdev(t *testing.T) {
 	mdevs, err := nvmdev.GetAllDevices()
 	require.Nil(t, err, "Error getting NVIDIA MDEV (vGPU) devices")
 	require.Equal(t, 1, len(mdevs), "Wrong number of NVIDIA MDEV (vGPU) devices")
-	require.Equal(t, "A100-4C", mdevs[0].MDEVType, "Wrong value for mdev_type")
-	require.Equal(t, "vfio_mdev", mdevs[0].Driver, "Wrong driver detected for mdev device")
-	require.Equal(t, 200, mdevs[0].IommuGroup, "Wrong value for iommu_group")
+
+	mdevA100 := mdevs[0]
+
+	require.Equal(t, "A100-4C", mdevA100.MDEVType, "Wrong value for mdev_type")
+	require.Equal(t, "vfio_mdev", mdevA100.Driver, "Wrong driver detected for mdev device")
+	require.Equal(t, 200, mdevA100.IommuGroup, "Wrong value for iommu_group")
+
+	pf, err = mdevA100.GetPhysicalFunction()
+	require.Nil(t, err, "Error getting the physical function for Mock A100 mediated device")
+	require.Equal(t, "0000:3b:04.1", pf.Address, "Wrong address for Mock A100 physical function")
 }

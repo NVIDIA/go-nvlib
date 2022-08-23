@@ -319,6 +319,25 @@ func (m *Device) Delete() error {
 	return nil
 }
 
+// GetPhysicalFunction gets the physical PCI device backing a 'parent' device
+func (p *ParentDevice) GetPhysicalFunction() (*nvpci.NvidiaPCIDevice, error) {
+	if !p.IsVF {
+		return p.NvidiaPCIDevice, nil
+	}
+
+	physfnPath, err := filepath.EvalSymlinks(path.Join(p.Path, "physfn"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to resolve %s: %v", path.Join(p.Path, "physfn"), err)
+	}
+
+	return nvpci.NewDevice(physfnPath)
+}
+
+// GetPhysicalFunction gets the physical PCI device that a vGPU is created on
+func (m *Device) GetPhysicalFunction() (*nvpci.NvidiaPCIDevice, error) {
+	return m.Parent.GetPhysicalFunction()
+}
+
 // IsMDEVTypeSupported checks if the mdevType is supported by the GPU
 func (p *ParentDevice) IsMDEVTypeSupported(mdevType string) bool {
 	_, found := p.mdevPaths[mdevType]
