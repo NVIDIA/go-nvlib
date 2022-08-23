@@ -66,6 +66,13 @@ func TestNvpci(t *testing.T) {
 	require.Equal(t, ga100PmcID, bar0.Read32(0))
 
 	require.Equal(t, devices[0].IsVF, false, "Device incorrectly identified as a VF")
+
+	device, err := nvpci.GetGPUByIndex(0)
+	require.Nil(t, err, "Error getting GPU at index 0")
+	require.Equal(t, "0000:80:05.1", device.Address, "Wrong Address found for device")
+
+	device, err = nvpci.GetGPUByIndex(1)
+	require.Error(t, err, "No error returned when getting GPU at invalid index")
 }
 
 func TestNvpciNUMANode(t *testing.T) {
