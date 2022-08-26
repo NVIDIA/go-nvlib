@@ -46,6 +46,7 @@ type Interface interface {
 	GetVGAControllers() ([]*NvidiaPCIDevice, error)
 	GetNVSwitches() ([]*NvidiaPCIDevice, error)
 	GetGPUs() ([]*NvidiaPCIDevice, error)
+	GetGPUByIndex(int) (*NvidiaPCIDevice, error)
 }
 
 // MemoryResources a more human readable handle
@@ -352,4 +353,18 @@ func (p *nvpci) GetGPUs() ([]*NvidiaPCIDevice, error) {
 	}
 
 	return filtered, nil
+}
+
+// GetGPUByIndex returns an NVIDIA GPU device at a particular index
+func (p *nvpci) GetGPUByIndex(i int) (*NvidiaPCIDevice, error) {
+	gpus, err := p.GetGPUs()
+	if err != nil {
+		return nil, fmt.Errorf("error getting all gpus: %v", err)
+	}
+
+	if i < 0 || i >= len(gpus) {
+		return nil, fmt.Errorf("invalid index '%d'", i)
+	}
+
+	return gpus[i], nil
 }
