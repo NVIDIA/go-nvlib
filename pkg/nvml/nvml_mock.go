@@ -35,6 +35,9 @@ var _ Interface = &InterfaceMock{}
 // 			ShutdownFunc: func() Return {
 // 				panic("mock out the Shutdown method")
 // 			},
+// 			SystemGetCudaDriverVersionFunc: func() (int, Return) {
+// 				panic("mock out the SystemGetCudaDriverVersion method")
+// 			},
 // 			SystemGetDriverVersionFunc: func() (string, Return) {
 // 				panic("mock out the SystemGetDriverVersion method")
 // 			},
@@ -62,6 +65,9 @@ type InterfaceMock struct {
 
 	// ShutdownFunc mocks the Shutdown method.
 	ShutdownFunc func() Return
+
+	// SystemGetCudaDriverVersionFunc mocks the SystemGetCudaDriverVersion method.
+	SystemGetCudaDriverVersionFunc func() (int, Return)
 
 	// SystemGetDriverVersionFunc mocks the SystemGetDriverVersion method.
 	SystemGetDriverVersionFunc func() (string, Return)
@@ -92,17 +98,21 @@ type InterfaceMock struct {
 		// Shutdown holds details about calls to the Shutdown method.
 		Shutdown []struct {
 		}
+		// SystemGetCudaDriverVersion holds details about calls to the SystemGetCudaDriverVersion method.
+		SystemGetCudaDriverVersion []struct {
+		}
 		// SystemGetDriverVersion holds details about calls to the SystemGetDriverVersion method.
 		SystemGetDriverVersion []struct {
 		}
 	}
-	lockDeviceGetCount         sync.RWMutex
-	lockDeviceGetHandleByIndex sync.RWMutex
-	lockDeviceGetHandleByUUID  sync.RWMutex
-	lockErrorString            sync.RWMutex
-	lockInit                   sync.RWMutex
-	lockShutdown               sync.RWMutex
-	lockSystemGetDriverVersion sync.RWMutex
+	lockDeviceGetCount             sync.RWMutex
+	lockDeviceGetHandleByIndex     sync.RWMutex
+	lockDeviceGetHandleByUUID      sync.RWMutex
+	lockErrorString                sync.RWMutex
+	lockInit                       sync.RWMutex
+	lockShutdown                   sync.RWMutex
+	lockSystemGetCudaDriverVersion sync.RWMutex
+	lockSystemGetDriverVersion     sync.RWMutex
 }
 
 // DeviceGetCount calls DeviceGetCountFunc.
@@ -273,6 +283,32 @@ func (mock *InterfaceMock) ShutdownCalls() []struct {
 	mock.lockShutdown.RLock()
 	calls = mock.calls.Shutdown
 	mock.lockShutdown.RUnlock()
+	return calls
+}
+
+// SystemGetCudaDriverVersion calls SystemGetCudaDriverVersionFunc.
+func (mock *InterfaceMock) SystemGetCudaDriverVersion() (int, Return) {
+	if mock.SystemGetCudaDriverVersionFunc == nil {
+		panic("InterfaceMock.SystemGetCudaDriverVersionFunc: method is nil but Interface.SystemGetCudaDriverVersion was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockSystemGetCudaDriverVersion.Lock()
+	mock.calls.SystemGetCudaDriverVersion = append(mock.calls.SystemGetCudaDriverVersion, callInfo)
+	mock.lockSystemGetCudaDriverVersion.Unlock()
+	return mock.SystemGetCudaDriverVersionFunc()
+}
+
+// SystemGetCudaDriverVersionCalls gets all the calls that were made to SystemGetCudaDriverVersion.
+// Check the length with:
+//     len(mockedInterface.SystemGetCudaDriverVersionCalls())
+func (mock *InterfaceMock) SystemGetCudaDriverVersionCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockSystemGetCudaDriverVersion.RLock()
+	calls = mock.calls.SystemGetCudaDriverVersion
+	mock.lockSystemGetCudaDriverVersion.RUnlock()
 	return calls
 }
 

@@ -92,6 +92,12 @@ func (n *nvmlLib) SystemGetDriverVersion() (string, Return) {
 	return v, Return(r)
 }
 
+// SystemGetCudaDriverVersion returns the version of CUDA associated with the NVIDIA driver
+func (n *nvmlLib) SystemGetCudaDriverVersion() (int, Return) {
+	v, r := nvml.SystemGetCudaDriverVersion()
+	return v, Return(r)
+}
+
 // ErrorString returns the error string associated with a given return value
 func (n *nvmlLib) ErrorString(ret Return) string {
 	return nvml.ErrorString(nvml.Return(ret))
