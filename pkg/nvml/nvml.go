@@ -46,7 +46,7 @@ func (n *nvmlLib) Init() Return {
 	if n.refcount == 0 {
 		errorStringFunc = nvml.ErrorString
 	}
-	n.refcount += 1
+	n.refcount++
 
 	return SUCCESS
 }
@@ -60,7 +60,7 @@ func (n *nvmlLib) Shutdown() Return {
 
 	n.Lock()
 	defer n.Unlock()
-	n.refcount -= 1
+	n.refcount--
 	if n.refcount == 0 {
 		errorStringFunc = defaultErrorStringFunc
 	}
