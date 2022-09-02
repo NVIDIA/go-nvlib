@@ -53,6 +53,9 @@ type Device interface {
 	GetMigDeviceHandleByIndex(Index int) (Device, Return)
 	GetGpuInstanceId() (int, Return)
 	GetComputeInstanceId() (int, Return)
+	GetCudaComputeCapability() (int, int, Return)
+	GetAttributes() (DeviceAttributes, Return)
+	GetName() (string, Return)
 }
 
 // GpuInstance defines the functions implemented by a GpuInstance
@@ -111,3 +114,6 @@ type ComputeInstanceProfileInfo nvml.ComputeInstanceProfileInfo
 
 // ComputeInstancePlacement holds placement info about a Compute Instance
 type ComputeInstancePlacement nvml.ComputeInstancePlacement
+
+// DeviceAttributes stores information about MIG devices
+type DeviceAttributes nvml.DeviceAttributes
