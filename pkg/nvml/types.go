@@ -20,53 +20,61 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-//go:generate moq -out nvml_mock.go . Interface
 // Interface defines the functions implemented by an NVML library
+//
+//go:generate moq -out nvml_mock.go . Interface
 type Interface interface {
-	Init() Return
-	Shutdown() Return
 	DeviceGetCount() (int, Return)
 	DeviceGetHandleByIndex(Index int) (Device, Return)
 	DeviceGetHandleByUUID(UUID string) (Device, Return)
-	SystemGetDriverVersion() (string, Return)
 	ErrorString(r Return) string
+	Init() Return
+	Shutdown() Return
+	SystemGetCudaDriverVersion() (int, Return)
+	SystemGetDriverVersion() (string, Return)
 }
 
-//go:generate moq -out device_mock.go . Device
 // Device defines the functions implemented by an NVML device
+//
+//go:generate moq -out device_mock.go . Device
 type Device interface {
-	GetIndex() (int, Return)
-	GetPciInfo() (PciInfo, Return)
-	GetMemoryInfo() (Memory, Return)
-	GetUUID() (string, Return)
-	GetMinorNumber() (int, Return)
-	IsMigDeviceHandle() (bool, Return)
+	GetAttributes() (DeviceAttributes, Return)
+	GetComputeInstanceId() (int, Return)
+	GetCudaComputeCapability() (int, int, Return)
 	GetDeviceHandleFromMigDeviceHandle() (Device, Return)
-	SetMigMode(Mode int) (Return, Return)
-	GetMigMode() (int, int, Return)
+	GetGpuInstanceId() (int, Return)
 	GetGpuInstanceProfileInfo(Profile int) (GpuInstanceProfileInfo, Return)
 	GetGpuInstances(Info *GpuInstanceProfileInfo) ([]GpuInstance, Return)
+	GetIndex() (int, Return)
 	GetMaxMigDeviceCount() (int, Return)
+	GetMemoryInfo() (Memory, Return)
 	GetMigDeviceHandleByIndex(Index int) (Device, Return)
-	GetGpuInstanceId() (int, Return)
-	GetComputeInstanceId() (int, Return)
+	GetMigMode() (int, int, Return)
+	GetMinorNumber() (int, Return)
+	GetName() (string, Return)
+	GetPciInfo() (PciInfo, Return)
+	GetUUID() (string, Return)
+	IsMigDeviceHandle() (bool, Return)
+	SetMigMode(Mode int) (Return, Return)
 }
 
-//go:generate moq -out gi_mock.go . GpuInstance
 // GpuInstance defines the functions implemented by a GpuInstance
+//
+//go:generate moq -out gi_mock.go . GpuInstance
 type GpuInstance interface {
-	GetInfo() (GpuInstanceInfo, Return)
-	GetComputeInstanceProfileInfo(Profile int, EngProfile int) (ComputeInstanceProfileInfo, Return)
 	CreateComputeInstance(Info *ComputeInstanceProfileInfo) (ComputeInstance, Return)
-	GetComputeInstances(Info *ComputeInstanceProfileInfo) ([]ComputeInstance, Return)
 	Destroy() Return
+	GetComputeInstanceProfileInfo(Profile int, EngProfile int) (ComputeInstanceProfileInfo, Return)
+	GetComputeInstances(Info *ComputeInstanceProfileInfo) ([]ComputeInstance, Return)
+	GetInfo() (GpuInstanceInfo, Return)
 }
 
-//go:generate moq -out ci_mock.go . ComputeInstance
 // ComputeInstance defines the functions implemented by a ComputeInstance
+//
+//go:generate moq -out ci_mock.go . ComputeInstance
 type ComputeInstance interface {
-	GetInfo() (ComputeInstanceInfo, Return)
 	Destroy() Return
+	GetInfo() (ComputeInstanceInfo, Return)
 }
 
 // GpuInstanceInfo holds info about a GPU Instance
@@ -92,7 +100,7 @@ type Return nvml.Return
 // Memory holds info about GPU device memory
 type Memory nvml.Memory
 
-//PciInfo holds info about the PCI connections of a GPU dvice
+// PciInfo holds info about the PCI connections of a GPU dvice
 type PciInfo nvml.PciInfo
 
 // GpuInstanceProfileInfo holds info about a GPU Instance Profile
@@ -106,3 +114,6 @@ type ComputeInstanceProfileInfo nvml.ComputeInstanceProfileInfo
 
 // ComputeInstancePlacement holds placement info about a Compute Instance
 type ComputeInstancePlacement nvml.ComputeInstancePlacement
+
+// DeviceAttributes stores information about MIG devices
+type DeviceAttributes nvml.DeviceAttributes

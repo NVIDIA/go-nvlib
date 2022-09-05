@@ -115,3 +115,21 @@ func (d nvmlDevice) GetComputeInstanceId() (int, Return) {
 	ci, r := nvml.Device(d).GetComputeInstanceId()
 	return ci, Return(r)
 }
+
+// GetCudaComputeCapability returns the compute capability major and minor versions for a device
+func (d nvmlDevice) GetCudaComputeCapability() (int, int, Return) {
+	major, minor, r := nvml.Device(d).GetCudaComputeCapability()
+	return major, minor, Return(r)
+}
+
+// GetAttributes returns the device attributes for a MIG device
+func (d nvmlDevice) GetAttributes() (DeviceAttributes, Return) {
+	a, r := nvml.Device(d).GetAttributes()
+	return DeviceAttributes(a), Return(r)
+}
+
+// GetName returns the device attributes for a MIG device
+func (d nvmlDevice) GetName() (string, Return) {
+	n, r := nvml.Device(d).GetName()
+	return n, Return(r)
+}

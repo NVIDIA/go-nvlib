@@ -46,7 +46,7 @@ func (n *nvmlLib) Init() Return {
 	if n.refcount == 0 {
 		errorStringFunc = nvml.ErrorString
 	}
-	n.refcount += 1
+	n.refcount++
 
 	return SUCCESS
 }
@@ -60,7 +60,7 @@ func (n *nvmlLib) Shutdown() Return {
 
 	n.Lock()
 	defer n.Unlock()
-	n.refcount -= 1
+	n.refcount--
 	if n.refcount == 0 {
 		errorStringFunc = defaultErrorStringFunc
 	}
@@ -89,6 +89,12 @@ func (n *nvmlLib) DeviceGetHandleByUUID(uuid string) (Device, Return) {
 // SystemGetDriverVersion returns the version of the installed NVIDIA driver
 func (n *nvmlLib) SystemGetDriverVersion() (string, Return) {
 	v, r := nvml.SystemGetDriverVersion()
+	return v, Return(r)
+}
+
+// SystemGetCudaDriverVersion returns the version of CUDA associated with the NVIDIA driver
+func (n *nvmlLib) SystemGetCudaDriverVersion() (int, Return) {
+	v, r := nvml.SystemGetCudaDriverVersion()
 	return v, Return(r)
 }
 
