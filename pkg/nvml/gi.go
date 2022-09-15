@@ -36,6 +36,12 @@ func (gi nvmlGpuInstance) GetInfo() (GpuInstanceInfo, Return) {
 	return info, Return(r)
 }
 
+// GetComputeInstanceById returns the Compute Instance associated with a particular ID.
+func (gi nvmlGpuInstance) GetComputeInstanceById(id int) (ComputeInstance, Return) {
+	ci, r := nvml.GpuInstance(gi).GetComputeInstanceById(id)
+	return nvmlComputeInstance(ci), Return(r)
+}
+
 // GetComputeInstanceProfileInfo returns info about a given Compute Instance profile
 func (gi nvmlGpuInstance) GetComputeInstanceProfileInfo(profile int, engProfile int) (ComputeInstanceProfileInfo, Return) {
 	p, r := nvml.GpuInstance(gi).GetComputeInstanceProfileInfo(profile, engProfile)

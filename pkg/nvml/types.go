@@ -42,6 +42,7 @@ type Device interface {
 	GetComputeInstanceId() (int, Return)
 	GetCudaComputeCapability() (int, int, Return)
 	GetDeviceHandleFromMigDeviceHandle() (Device, Return)
+	GetGpuInstanceById(ID int) (GpuInstance, Return)
 	GetGpuInstanceId() (int, Return)
 	GetGpuInstanceProfileInfo(Profile int) (GpuInstanceProfileInfo, Return)
 	GetGpuInstances(Info *GpuInstanceProfileInfo) ([]GpuInstance, Return)
@@ -64,6 +65,7 @@ type Device interface {
 type GpuInstance interface {
 	CreateComputeInstance(Info *ComputeInstanceProfileInfo) (ComputeInstance, Return)
 	Destroy() Return
+	GetComputeInstanceById(ID int) (ComputeInstance, Return)
 	GetComputeInstanceProfileInfo(Profile int, EngProfile int) (ComputeInstanceProfileInfo, Return)
 	GetComputeInstances(Info *ComputeInstanceProfileInfo) ([]ComputeInstance, Return)
 	GetInfo() (GpuInstanceInfo, Return)
