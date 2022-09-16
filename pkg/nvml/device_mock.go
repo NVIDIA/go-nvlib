@@ -29,6 +29,9 @@ var _ Device = &DeviceMock{}
 // 			GetDeviceHandleFromMigDeviceHandleFunc: func() (Device, Return) {
 // 				panic("mock out the GetDeviceHandleFromMigDeviceHandle method")
 // 			},
+// 			GetGpuInstanceByIdFunc: func(ID int) (GpuInstance, Return) {
+// 				panic("mock out the GetGpuInstanceById method")
+// 			},
 // 			GetGpuInstanceIdFunc: func() (int, Return) {
 // 				panic("mock out the GetGpuInstanceId method")
 // 			},
@@ -90,6 +93,9 @@ type DeviceMock struct {
 	// GetDeviceHandleFromMigDeviceHandleFunc mocks the GetDeviceHandleFromMigDeviceHandle method.
 	GetDeviceHandleFromMigDeviceHandleFunc func() (Device, Return)
 
+	// GetGpuInstanceByIdFunc mocks the GetGpuInstanceById method.
+	GetGpuInstanceByIdFunc func(ID int) (GpuInstance, Return)
+
 	// GetGpuInstanceIdFunc mocks the GetGpuInstanceId method.
 	GetGpuInstanceIdFunc func() (int, Return)
 
@@ -146,6 +152,11 @@ type DeviceMock struct {
 		// GetDeviceHandleFromMigDeviceHandle holds details about calls to the GetDeviceHandleFromMigDeviceHandle method.
 		GetDeviceHandleFromMigDeviceHandle []struct {
 		}
+		// GetGpuInstanceById holds details about calls to the GetGpuInstanceById method.
+		GetGpuInstanceById []struct {
+			// ID is the ID argument value.
+			ID int
+		}
 		// GetGpuInstanceId holds details about calls to the GetGpuInstanceId method.
 		GetGpuInstanceId []struct {
 		}
@@ -201,6 +212,7 @@ type DeviceMock struct {
 	lockGetComputeInstanceId               sync.RWMutex
 	lockGetCudaComputeCapability           sync.RWMutex
 	lockGetDeviceHandleFromMigDeviceHandle sync.RWMutex
+	lockGetGpuInstanceById                 sync.RWMutex
 	lockGetGpuInstanceId                   sync.RWMutex
 	lockGetGpuInstanceProfileInfo          sync.RWMutex
 	lockGetGpuInstances                    sync.RWMutex
@@ -318,6 +330,37 @@ func (mock *DeviceMock) GetDeviceHandleFromMigDeviceHandleCalls() []struct {
 	mock.lockGetDeviceHandleFromMigDeviceHandle.RLock()
 	calls = mock.calls.GetDeviceHandleFromMigDeviceHandle
 	mock.lockGetDeviceHandleFromMigDeviceHandle.RUnlock()
+	return calls
+}
+
+// GetGpuInstanceById calls GetGpuInstanceByIdFunc.
+func (mock *DeviceMock) GetGpuInstanceById(ID int) (GpuInstance, Return) {
+	if mock.GetGpuInstanceByIdFunc == nil {
+		panic("DeviceMock.GetGpuInstanceByIdFunc: method is nil but Device.GetGpuInstanceById was just called")
+	}
+	callInfo := struct {
+		ID int
+	}{
+		ID: ID,
+	}
+	mock.lockGetGpuInstanceById.Lock()
+	mock.calls.GetGpuInstanceById = append(mock.calls.GetGpuInstanceById, callInfo)
+	mock.lockGetGpuInstanceById.Unlock()
+	return mock.GetGpuInstanceByIdFunc(ID)
+}
+
+// GetGpuInstanceByIdCalls gets all the calls that were made to GetGpuInstanceById.
+// Check the length with:
+//     len(mockedDevice.GetGpuInstanceByIdCalls())
+func (mock *DeviceMock) GetGpuInstanceByIdCalls() []struct {
+	ID int
+} {
+	var calls []struct {
+		ID int
+	}
+	mock.lockGetGpuInstanceById.RLock()
+	calls = mock.calls.GetGpuInstanceById
+	mock.lockGetGpuInstanceById.RUnlock()
 	return calls
 }
 

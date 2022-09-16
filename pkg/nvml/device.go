@@ -76,6 +76,12 @@ func (d nvmlDevice) GetMigMode() (int, int, Return) {
 	return s1, s2, Return(r)
 }
 
+// GetGpuInstanceById returns the GPU Instance associated with a particular ID
+func (d nvmlDevice) GetGpuInstanceById(id int) (GpuInstance, Return) {
+	gi, r := nvml.Device(d).GetGpuInstanceById(id)
+	return nvmlGpuInstance(gi), Return(r)
+}
+
 // GetGpuInstanceProfileInfo returns the profile info of a GPU Instance
 func (d nvmlDevice) GetGpuInstanceProfileInfo(profile int) (GpuInstanceProfileInfo, Return) {
 	p, r := nvml.Device(d).GetGpuInstanceProfileInfo(profile)

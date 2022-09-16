@@ -23,6 +23,9 @@ var _ GpuInstance = &GpuInstanceMock{}
 // 			DestroyFunc: func() Return {
 // 				panic("mock out the Destroy method")
 // 			},
+// 			GetComputeInstanceByIdFunc: func(ID int) (ComputeInstance, Return) {
+// 				panic("mock out the GetComputeInstanceById method")
+// 			},
 // 			GetComputeInstanceProfileInfoFunc: func(Profile int, EngProfile int) (ComputeInstanceProfileInfo, Return) {
 // 				panic("mock out the GetComputeInstanceProfileInfo method")
 // 			},
@@ -45,6 +48,9 @@ type GpuInstanceMock struct {
 	// DestroyFunc mocks the Destroy method.
 	DestroyFunc func() Return
 
+	// GetComputeInstanceByIdFunc mocks the GetComputeInstanceById method.
+	GetComputeInstanceByIdFunc func(ID int) (ComputeInstance, Return)
+
 	// GetComputeInstanceProfileInfoFunc mocks the GetComputeInstanceProfileInfo method.
 	GetComputeInstanceProfileInfoFunc func(Profile int, EngProfile int) (ComputeInstanceProfileInfo, Return)
 
@@ -64,6 +70,11 @@ type GpuInstanceMock struct {
 		// Destroy holds details about calls to the Destroy method.
 		Destroy []struct {
 		}
+		// GetComputeInstanceById holds details about calls to the GetComputeInstanceById method.
+		GetComputeInstanceById []struct {
+			// ID is the ID argument value.
+			ID int
+		}
 		// GetComputeInstanceProfileInfo holds details about calls to the GetComputeInstanceProfileInfo method.
 		GetComputeInstanceProfileInfo []struct {
 			// Profile is the Profile argument value.
@@ -82,6 +93,7 @@ type GpuInstanceMock struct {
 	}
 	lockCreateComputeInstance         sync.RWMutex
 	lockDestroy                       sync.RWMutex
+	lockGetComputeInstanceById        sync.RWMutex
 	lockGetComputeInstanceProfileInfo sync.RWMutex
 	lockGetComputeInstances           sync.RWMutex
 	lockGetInfo                       sync.RWMutex
@@ -141,6 +153,37 @@ func (mock *GpuInstanceMock) DestroyCalls() []struct {
 	mock.lockDestroy.RLock()
 	calls = mock.calls.Destroy
 	mock.lockDestroy.RUnlock()
+	return calls
+}
+
+// GetComputeInstanceById calls GetComputeInstanceByIdFunc.
+func (mock *GpuInstanceMock) GetComputeInstanceById(ID int) (ComputeInstance, Return) {
+	if mock.GetComputeInstanceByIdFunc == nil {
+		panic("GpuInstanceMock.GetComputeInstanceByIdFunc: method is nil but GpuInstance.GetComputeInstanceById was just called")
+	}
+	callInfo := struct {
+		ID int
+	}{
+		ID: ID,
+	}
+	mock.lockGetComputeInstanceById.Lock()
+	mock.calls.GetComputeInstanceById = append(mock.calls.GetComputeInstanceById, callInfo)
+	mock.lockGetComputeInstanceById.Unlock()
+	return mock.GetComputeInstanceByIdFunc(ID)
+}
+
+// GetComputeInstanceByIdCalls gets all the calls that were made to GetComputeInstanceById.
+// Check the length with:
+//     len(mockedGpuInstance.GetComputeInstanceByIdCalls())
+func (mock *GpuInstanceMock) GetComputeInstanceByIdCalls() []struct {
+	ID int
+} {
+	var calls []struct {
+		ID int
+	}
+	mock.lockGetComputeInstanceById.RLock()
+	calls = mock.calls.GetComputeInstanceById
+	mock.lockGetComputeInstanceById.RUnlock()
 	return calls
 }
 
