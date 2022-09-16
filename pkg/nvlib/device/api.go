@@ -14,43 +14,50 @@
  * limitations under the License.
  */
 
-package mig
+package device
 
 import (
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 )
 
-// Interface provides the API to the mig package
+// Interface provides the API to the 'device' package
 type Interface interface {
-	NewProfile(giProfileID, ciProfileID, ciEngProfileID int, migMemorySizeMB, deviceMemorySizeBytes uint64) (Profile, error)
-	ParseProfile(profile string) (Profile, error)
+	GetDevices() ([]Device, error)
+	GetMigDevices() ([]MigDevice, error)
+	GetMigProfiles() ([]MigProfile, error)
 	NewDevice(d nvml.Device) (Device, error)
+	NewMigDevice(d nvml.Device) (MigDevice, error)
+	NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, migMemorySizeMB, deviceMemorySizeBytes uint64) (MigProfile, error)
+	ParseMigProfile(profile string) (MigProfile, error)
+	VisitDevices(func(i int, d Device) error) error
+	VisitMigDevices(func(i int, d Device, j int, m MigDevice) error) error
+	VisitMigProfiles(func(p MigProfile) error) error
 }
 
-type miglib struct {
+type devicelib struct {
 	nvml nvml.Interface
 }
 
-var _ Interface = &miglib{}
+var _ Interface = &devicelib{}
 
-// New creates a new instance of the 'mig' interface
+// New creates a new instance of the 'device' interface
 func New(opts ...Option) Interface {
-	m := &miglib{}
+	d := &devicelib{}
 	for _, opt := range opts {
-		opt(m)
+		opt(d)
 	}
-	if m.nvml == nil {
-		m.nvml = nvml.New()
+	if d.nvml == nil {
+		d.nvml = nvml.New()
 	}
-	return m
+	return d
 }
 
-// WithNvml provides an Option to set the NVML library used by the 'mig' interface
+// WithNvml provides an Option to set the NVML library used by the 'device' interface
 func WithNvml(nvml nvml.Interface) Option {
-	return func(m *miglib) {
-		m.nvml = nvml
+	return func(d *devicelib) {
+		d.nvml = nvml
 	}
 }
 
 // Option defines a function for passing options to the New() call
-type Option func(*miglib)
+type Option func(*devicelib)

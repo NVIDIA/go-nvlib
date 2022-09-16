@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mig
+package device
 
 import (
 	"fmt"
@@ -22,38 +22,39 @@ import (
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 )
 
-// Device defines the set of extended functions associated with a mig.Device
-type Device interface {
-	GetProfile() (Profile, error)
-}
-
-type device struct {
+// MigDevice defines the set of extended functions associated with a MIG device
+type MigDevice interface {
 	nvml.Device
-	miglib  *miglib
-	profile Profile
+	GetProfile() (MigProfile, error)
 }
 
-var _ Device = &device{}
+type migdevice struct {
+	nvml.Device
+	lib     *devicelib
+	profile MigProfile
+}
 
-// NewDevice builds a new Device from an nvml.Device
-func (m *miglib) NewDevice(d nvml.Device) (Device, error) {
-	isMig, ret := d.IsMigDeviceHandle()
+var _ MigDevice = &migdevice{}
+
+// NewMigDevice builds a new MigDevice from an nvml.Device
+func (d *devicelib) NewMigDevice(handle nvml.Device) (MigDevice, error) {
+	isMig, ret := handle.IsMigDeviceHandle()
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("error checking if device is a MIG device: %v", ret)
 	}
 	if !isMig {
 		return nil, fmt.Errorf("not a MIG device")
 	}
-	return &device{d, m, nil}, nil
+	return &migdevice{handle, d, nil}, nil
 }
 
 // GetProfile returns the MIG profile associated with a MIG device
-func (d *device) GetProfile() (Profile, error) {
-	if d.profile != nil {
-		return d.profile, nil
+func (m *migdevice) GetProfile() (MigProfile, error) {
+	if m.profile != nil {
+		return m.profile, nil
 	}
 
-	parent, ret := d.Device.GetDeviceHandleFromMigDeviceHandle()
+	parent, ret := m.Device.GetDeviceHandleFromMigDeviceHandle()
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("error getting parent device handle: %v", ret)
 	}
@@ -63,17 +64,17 @@ func (d *device) GetProfile() (Profile, error) {
 		return nil, fmt.Errorf("error getting parent memory info: %v", ret)
 	}
 
-	attributes, ret := d.Device.GetAttributes()
+	attributes, ret := m.Device.GetAttributes()
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("error getting MIG device attributes: %v", ret)
 	}
 
-	giID, ret := d.Device.GetGpuInstanceId()
+	giID, ret := m.Device.GetGpuInstanceId()
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("error getting MIG device GPU Instance ID: %v", ret)
 	}
 
-	ciID, ret := d.Device.GetComputeInstanceId()
+	ciID, ret := m.Device.GetComputeInstanceId()
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("error getting MIG device Compute Instance ID: %v", ret)
 	}
@@ -120,12 +121,12 @@ func (d *device) GetProfile() (Profile, error) {
 					continue
 				}
 
-				p, err := d.miglib.NewProfile(i, j, k, attributes.MemorySizeMB, parentMemoryInfo.Total)
+				p, err := m.lib.NewMigProfile(i, j, k, attributes.MemorySizeMB, parentMemoryInfo.Total)
 				if err != nil {
 					return nil, fmt.Errorf("error creating MIG profile: %v", err)
 				}
 
-				d.profile = p
+				m.profile = p
 				return p, nil
 			}
 		}

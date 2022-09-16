@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mig
+package device
 
 import (
 	"fmt"
@@ -30,16 +30,16 @@ const (
 	AttributeMediaExtensions = "me"
 )
 
-// Profile represents a specific MIG profile.
+// MigProfile represents a specific MIG profile.
 // Examples include "1g.5gb", "2g.10gb", "1c.2g.10gb", or "1c.1g.5gb+me", etc.
-type Profile interface {
+type MigProfile interface {
 	String() string
-	GetInfo() ProfileInfo
-	Equals(other Profile) bool
+	GetInfo() MigProfileInfo
+	Equals(other MigProfile) bool
 }
 
-// ProfileInfo holds all info associated with a specific MIG profile
-type ProfileInfo struct {
+// MigProfileInfo holds all info associated with a specific MIG profile
+type MigProfileInfo struct {
 	C              int
 	G              int
 	GB             int
@@ -49,10 +49,10 @@ type ProfileInfo struct {
 	CIEngProfileID int
 }
 
-var _ Profile = &ProfileInfo{}
+var _ MigProfile = &MigProfileInfo{}
 
 // NewProfile constructs a new Profile struct using info from the giProfiles and ciProfiles used to create it.
-func (m *miglib) NewProfile(giProfileID, ciProfileID, ciEngProfileID int, migMemorySizeMB, deviceMemorySizeBytes uint64) (Profile, error) {
+func (d *devicelib) NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, migMemorySizeMB, deviceMemorySizeBytes uint64) (MigProfile, error) {
 	giSlices := 0
 	switch giProfileID {
 	case nvml.GPU_INSTANCE_PROFILE_1_SLICE:
@@ -101,7 +101,7 @@ func (m *miglib) NewProfile(giProfileID, ciProfileID, ciEngProfileID int, migMem
 		attrs = append(attrs, AttributeMediaExtensions)
 	}
 
-	p := &ProfileInfo{
+	p := &MigProfileInfo{
 		C:              ciSlices,
 		G:              giSlices,
 		GB:             int(getMigMemorySizeGB(deviceMemorySizeBytes, migMemorySizeMB)),
@@ -114,8 +114,8 @@ func (m *miglib) NewProfile(giProfileID, ciProfileID, ciEngProfileID int, migMem
 	return p, nil
 }
 
-// ParseProfile converts a string representation of a Profile into an object.
-func (m *miglib) ParseProfile(profile string) (Profile, error) {
+// ParseMigProfile converts a string representation of a MigProfile into an object
+func (d *devicelib) ParseMigProfile(profile string) (MigProfile, error) {
 	var err error
 	var c, g, gb int
 	var attrs []string
@@ -126,18 +126,18 @@ func (m *miglib) ParseProfile(profile string) (Profile, error) {
 
 	split := strings.SplitN(profile, "+", 2)
 	if len(split) == 2 {
-		attrs, err = parseProfileAttributes(split[1])
+		attrs, err = parseMigProfileAttributes(split[1])
 		if err != nil {
 			return nil, fmt.Errorf("error parsing attributes following '+' in Profile string: %v", err)
 		}
 	}
 
-	c, g, gb, err = parseProfileFields(split[0])
+	c, g, gb, err = parseMigProfileFields(split[0])
 	if err != nil {
 		return nil, fmt.Errorf("error parsing '.' separated fields in Profile string: %v", err)
 	}
 
-	p := &ProfileInfo{
+	p := &MigProfileInfo{
 		C:          c,
 		G:          g,
 		GB:         gb,
@@ -197,7 +197,7 @@ func (m *miglib) ParseProfile(profile string) (Profile, error) {
 }
 
 // String returns the string representation of a Profile
-func (p *ProfileInfo) String() string {
+func (p *MigProfileInfo) String() string {
 	var suffix string
 	if len(p.Attributes) > 0 {
 		suffix = "+" + strings.Join(p.Attributes, ",")
@@ -209,14 +209,14 @@ func (p *ProfileInfo) String() string {
 }
 
 // GetInfo returns detailed info about a Profile
-func (p *ProfileInfo) GetInfo() ProfileInfo {
+func (p *MigProfileInfo) GetInfo() MigProfileInfo {
 	return *p
 }
 
 // Equals checks if two Profiles are identical or not
-func (p *ProfileInfo) Equals(other Profile) bool {
+func (p *MigProfileInfo) Equals(other MigProfile) bool {
 	switch o := other.(type) {
-	case *ProfileInfo:
+	case *MigProfileInfo:
 		if p.C != o.C {
 			return false
 		}
@@ -240,7 +240,7 @@ func (p *ProfileInfo) Equals(other Profile) bool {
 	return false
 }
 
-func parseProfileField(s string, field string) (int, error) {
+func parseMigProfileField(s string, field string) (int, error) {
 	if strings.TrimSpace(s) != s {
 		return -1, fmt.Errorf("leading or trailing spaces on '%%d%s'", field)
 	}
@@ -257,32 +257,32 @@ func parseProfileField(s string, field string) (int, error) {
 	return v, nil
 }
 
-func parseProfileFields(s string) (int, int, int, error) {
+func parseMigProfileFields(s string) (int, int, int, error) {
 	var err error
 	var c, g, gb int
 
 	split := strings.SplitN(s, ".", 3)
 	if len(split) == 3 {
-		c, err = parseProfileField(split[0], "c")
+		c, err = parseMigProfileField(split[0], "c")
 		if err != nil {
 			return -1, -1, -1, err
 		}
-		g, err = parseProfileField(split[1], "g")
+		g, err = parseMigProfileField(split[1], "g")
 		if err != nil {
 			return -1, -1, -1, err
 		}
-		gb, err = parseProfileField(split[2], "gb")
+		gb, err = parseMigProfileField(split[2], "gb")
 		if err != nil {
 			return -1, -1, -1, err
 		}
 		return c, g, gb, err
 	}
 	if len(split) == 2 {
-		g, err = parseProfileField(split[0], "g")
+		g, err = parseMigProfileField(split[0], "g")
 		if err != nil {
 			return -1, -1, -1, err
 		}
-		gb, err = parseProfileField(split[1], "gb")
+		gb, err = parseMigProfileField(split[1], "gb")
 		if err != nil {
 			return -1, -1, -1, err
 		}
@@ -292,7 +292,7 @@ func parseProfileFields(s string) (int, int, int, error) {
 	return -1, -1, -1, fmt.Errorf("parsed wrong number of fields, expected 2 or 3")
 }
 
-func parseProfileAttributes(s string) ([]string, error) {
+func parseMigProfileAttributes(s string) ([]string, error) {
 	attr := strings.Split(s, ",")
 	if len(attr) == 0 {
 		return nil, fmt.Errorf("empty attribute list")

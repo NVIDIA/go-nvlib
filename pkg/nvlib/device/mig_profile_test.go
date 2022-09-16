@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mig
+package device
 
 import (
 	"fmt"
@@ -256,10 +256,10 @@ func TestParseMigProfile(t *testing.T) {
 		},
 	}
 
-	m := New()
+	d := New()
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			_, err := m.ParseProfile(tc.device)
+			_, err := d.ParseMigProfile(tc.device)
 			if tc.valid {
 				require.Nil(t, err)
 			} else {
