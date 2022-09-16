@@ -22,9 +22,16 @@ import (
 
 // Interface provides the API to the 'device' package
 type Interface interface {
+	GetDevices() ([]Device, error)
+	GetMigDevices() ([]MigDevice, error)
+	GetMigProfiles() ([]MigProfile, error)
+	NewDevice(d nvml.Device) (Device, error)
+	NewMigDevice(d nvml.Device) (MigDevice, error)
 	NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, migMemorySizeMB, deviceMemorySizeBytes uint64) (MigProfile, error)
 	ParseMigProfile(profile string) (MigProfile, error)
-	NewMigDevice(d nvml.Device) (MigDevice, error)
+	VisitDevices(func(i int, d Device) error) error
+	VisitMigDevices(func(i int, d Device, j int, m MigDevice) error) error
+	VisitMigProfiles(func(p MigProfile) error) error
 }
 
 type devicelib struct {
