@@ -36,6 +36,13 @@ const (
 	nvcapsDevicePath     = "/dev/nvidia-caps"
 )
 
+type nvcapslib struct {
+	root string
+	caps MigCaps
+}
+
+var _ Interface = (*nvcapslib)(nil)
+
 // MigMinor represents the minor number of a MIG device
 type MigMinor int
 
@@ -47,13 +54,13 @@ type MigCaps map[MigCap]MigMinor
 
 // NewGPUInstanceCap creates a MigCap for the specified MIG GPU instance.
 // A GPU instance is uniquely defined by the GPU minor number and GI instance ID.
-func NewGPUInstanceCap(gpu, gi int) MigCap {
+func (l *nvcapslib) NewGPUInstanceCap(gpu, gi int) MigCap {
 	return MigCap(fmt.Sprintf("/gpu%d/gi%d/access", gpu, gi))
 }
 
 // NewComputeInstanceCap creates a MigCap for the specified MIG Compute instance.
 // A GPU instance is uniquely defined by the GPU minor number, GI instance ID, and CI instance ID.
-func NewComputeInstanceCap(gpu, gi, ci int) MigCap {
+func (l *nvcapslib) NewComputeInstanceCap(gpu, gi, ci int) MigCap {
 	return MigCap(fmt.Sprintf("/gpu%d/gi%d/ci%d/access", gpu, gi, ci))
 }
 
