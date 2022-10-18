@@ -62,6 +62,7 @@ type Device interface {
 	GetNvLinkRemotePciInfo(int) (PciInfo, Return)
 	GetNvLinkState(int) (EnableState, Return)
 	GetPciInfo() (PciInfo, Return)
+	CreateGpuInstance(Info *GpuInstanceProfileInfo) (GpuInstance, Return)
 	GetSupportedEventTypes() (uint64, Return)
 	GetTopologyCommonAncestor(Device) (GpuTopologyLevel, Return)
 	GetUUID() (string, Return)
