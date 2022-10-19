@@ -24,6 +24,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/pciids"
 )
 
 const (
@@ -47,6 +49,9 @@ type Interface interface {
 	GetNVSwitches() ([]*NvidiaPCIDevice, error)
 	GetGPUs() ([]*NvidiaPCIDevice, error)
 	GetGPUByIndex(int) (*NvidiaPCIDevice, error)
+	GetNetworkControllers() ([]*NvidiaPCIDevice, error)
+	GetPciBridges() ([]*NvidiaPCIDevice, error)
+	GetDPUs() ([]*NvidiaPCIDevice, error)
 }
 
 // MemoryResources a more human readable handle
@@ -70,7 +75,9 @@ type NvidiaPCIDevice struct {
 	Address    string
 	Vendor     uint16
 	Class      uint32
+	ClassName  string
 	Device     uint16
+	DeviceName string
 	Driver     string
 	IommuGroup int
 	NumaNode   int
@@ -117,12 +124,14 @@ func (d *NvidiaPCIDevice) Reset() error {
 
 // New interface that allows us to get a list of all NVIDIA PCI devices
 func New() Interface {
-	return &nvpci{PCIDevicesRoot}
+	return NewFrom(PCIDevicesRoot)
 }
 
 // NewFrom interface allows us to get a list of all NVIDIA PCI devices at a specific root directory
 func NewFrom(root string) Interface {
-	return &nvpci{root}
+	return &nvpci{
+		pciDevicesRoot: root,
+	}
 }
 
 // GetAllDevices returns all Nvidia PCI devices on the system
@@ -173,7 +182,7 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		return nil, fmt.Errorf("unable to convert vendor string to uint16: %v", vendorStr)
 	}
 
-	if uint16(vendorID) != PCINvidiaVendorID {
+	if uint16(vendorID) != PCINvidiaVendorID && uint16(vendorID) != PCIMellanoxVendorID {
 		return nil, nil
 	}
 
@@ -270,6 +279,8 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		}
 	}
 
+	pciDB := pciids.NewDB()
+
 	nvdevice := &NvidiaPCIDevice{
 		Path:       devicePath,
 		Address:    address,
@@ -282,6 +293,8 @@ func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
 		Config:     config,
 		Resources:  resources,
 		IsVF:       isVF,
+		DeviceName: pciDB.GetDeviceName(uint16(vendorID), uint16(deviceID)),
+		ClassName:  pciDB.GetClassName(uint32(classID)),
 	}
 
 	return nvdevice, nil
