@@ -49,6 +49,7 @@ type Interface interface {
 	GetNVSwitches() ([]*NvidiaPCIDevice, error)
 	GetGPUs() ([]*NvidiaPCIDevice, error)
 	GetGPUByIndex(int) (*NvidiaPCIDevice, error)
+	GetGPUByPciBusID(string) (*NvidiaPCIDevice, error)
 	GetNetworkControllers() ([]*NvidiaPCIDevice, error)
 	GetPciBridges() ([]*NvidiaPCIDevice, error)
 	GetDPUs() ([]*NvidiaPCIDevice, error)
@@ -143,10 +144,10 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 
 	var nvdevices []*NvidiaPCIDevice
 	for _, deviceDir := range deviceDirs {
-		devicePath := path.Join(p.pciDevicesRoot, deviceDir.Name())
-		nvdevice, err := NewDevice(devicePath)
+		deviceAddress := deviceDir.Name()
+		nvdevice, err := p.GetGPUByPciBusID(deviceAddress)
 		if err != nil {
-			return nil, fmt.Errorf("error constructing NVIDIA PCI device %s: %v", deviceDir.Name(), err)
+			return nil, fmt.Errorf("error constructing NVIDIA PCI device %s: %v", deviceAddress, err)
 		}
 		if nvdevice == nil {
 			continue
@@ -168,9 +169,9 @@ func (p *nvpci) GetAllDevices() ([]*NvidiaPCIDevice, error) {
 	return nvdevices, nil
 }
 
-// NewDevice constructs an NvidiaPCIDevice
-func NewDevice(devicePath string) (*NvidiaPCIDevice, error) {
-	address := path.Base(devicePath)
+// GetGPUByPciBusID constructs an NvidiaPCIDevice for the specified address (PCI Bus ID)
+func (p *nvpci) GetGPUByPciBusID(address string) (*NvidiaPCIDevice, error) {
+	devicePath := filepath.Join(p.pciDevicesRoot, address)
 
 	vendor, err := os.ReadFile(path.Join(devicePath, "vendor"))
 	if err != nil {
