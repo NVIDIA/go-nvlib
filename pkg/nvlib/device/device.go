@@ -43,6 +43,11 @@ var _ Device = &device{}
 
 // NewDevice builds a new Device from an nvml.Device
 func (d *devicelib) NewDevice(dev nvml.Device) (Device, error) {
+	return d.newDevice(dev)
+}
+
+// newDevice creates a device from an nvml.Device
+func (d *devicelib) newDevice(dev nvml.Device) (*device, error) {
 	return &device{dev, d}, nil
 }
 
@@ -195,7 +200,7 @@ func (d *devicelib) VisitDevices(visit func(int, Device) error) error {
 		if ret != nvml.SUCCESS {
 			return fmt.Errorf("error getting device handle for index '%v': %v", i, ret)
 		}
-		dev, err := d.NewDevice(device)
+		dev, err := d.newDevice(device)
 		if err != nil {
 			return fmt.Errorf("error creating new device wrapper: %v", err)
 		}
