@@ -238,6 +238,20 @@ func (d *device) getClass() (Class, error) {
 	return Class(device.Class), nil
 }
 
+// isSkipped checks whether the device should be skipped.
+func (d *device) isSkipped() (bool, error) {
+	name, ret := d.GetName()
+	if ret != nvml.SUCCESS {
+		return false, fmt.Errorf("error getting device name: %v", ret)
+	}
+
+	if _, exists := d.lib.skippedDevices[name]; exists {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // VisitDevices visits each top-level device and invokes a callback function for it
 func (d *devicelib) VisitDevices(visit func(int, Device) error) error {
 	count, ret := d.nvml.DeviceGetCount()
@@ -255,11 +269,11 @@ func (d *devicelib) VisitDevices(visit func(int, Device) error) error {
 			return fmt.Errorf("error creating new device wrapper: %v", err)
 		}
 
-		class, err := dev.getClass()
+		isSkipped, err := dev.isSkipped()
 		if err != nil {
-			return fmt.Errorf("error getting PCI device class for device: %v", err)
+			return fmt.Errorf("error checking whether device is skipped: %v", err)
 		}
-		if !d.classIsSelected(class) {
+		if isSkipped {
 			continue
 		}
 
