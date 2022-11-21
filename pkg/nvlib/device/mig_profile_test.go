@@ -256,7 +256,8 @@ func TestParseMigProfile(t *testing.T) {
 		},
 	}
 
-	d := New()
+	d, err := New()
+	require.NoError(t, err)
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			_, err := d.ParseMigProfile(tc.device)

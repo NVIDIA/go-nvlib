@@ -17,7 +17,10 @@
 package device
 
 import (
+	"fmt"
+
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci"
 )
 
 // Interface provides the API to the 'device' package
@@ -42,20 +45,23 @@ type devicelib struct {
 var _ Interface = &devicelib{}
 
 // New creates a new instance of the 'device' interface
-func New(opts ...Option) Interface {
+func New(opts ...Option) (Interface, error) {
 	d := &devicelib{}
 	for _, opt := range opts {
 		opt(d)
 	}
+	if d.selectedDeviceClasses == nil {
+		option, err := defaultSelectedDeviceClasses()
+		if err != nil {
+			return nil, fmt.Errorf("error setting default selected device classes: %v", err)
+		}
+		option(d)
+	}
 	if d.nvml == nil {
 		d.nvml = nvml.New()
 	}
-	if d.selectedDeviceClasses == nil {
-		d.selectedDeviceClasses = map[Class]struct{}{
-			ClassCompute: {},
-		}
-	}
-	return d
+
+	return d, nil
 }
 
 // WithNvml provides an Option to set the NVML library used by the 'device' interface
@@ -79,3 +85,27 @@ func WithSelectedDeviceClasses(classes ...Class) Option {
 
 // Option defines a function for passing options to the New() call
 type Option func(*devicelib)
+
+// defaultSelectedDeviceClasses sets the default device class selection based on the devices included.
+func defaultSelectedDeviceClasses() (Option, error) {
+	gpus, err := nvpci.New().GetGPUs()
+	if err != nil {
+		return nil, fmt.Errorf("error getting PCI devices: %v", err)
+	}
+
+	classes := make(map[Class]struct{})
+	for _, gpu := range gpus {
+		class := Class(gpu.Class)
+		classes[class] = struct{}{}
+	}
+
+	var option Option
+	if len(classes) == 1 {
+		option = func(d *devicelib) {
+		}
+	} else {
+		option = WithSelectedDeviceClasses(ClassCompute)
+	}
+
+	return option, nil
+}
