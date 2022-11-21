@@ -15,4 +15,4 @@ ARG GOLANG_VERSION=1.16
 FROM golang:${GOLANG_VERSION}
 
 RUN go get -u golang.org/x/lint/golint
-RUN go install github.com/matryer/moq@latest
+RUN go install github.com/matryer/moq@v0.2.7
