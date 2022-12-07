@@ -51,7 +51,10 @@ func New(opts ...Option) Interface {
 		d.nvml = nvml.New()
 	}
 	if d.skippedDevices == nil {
-		WithSkippedDevices("NVIDIA DGX Display")(d)
+		WithSkippedDevices(
+			"DGX Display",
+			"NVIDIA DGX Display",
+		)(d)
 	}
 	return d
 }
