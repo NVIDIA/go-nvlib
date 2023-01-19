@@ -26,7 +26,9 @@ type Interface interface {
 	GetMigDevices() ([]MigDevice, error)
 	GetMigProfiles() ([]MigProfile, error)
 	NewDevice(d nvml.Device) (Device, error)
+	NewDeviceByUUID(uuid string) (Device, error)
 	NewMigDevice(d nvml.Device) (MigDevice, error)
+	NewMigDeviceByUUID(uuid string) (MigDevice, error)
 	NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, migMemorySizeMB, deviceMemorySizeBytes uint64) (MigProfile, error)
 	ParseMigProfile(profile string) (MigProfile, error)
 	VisitDevices(func(i int, d Device) error) error
