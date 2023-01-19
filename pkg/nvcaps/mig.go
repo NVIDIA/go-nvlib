@@ -1,5 +1,5 @@
-/*
-# Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
+/**
+# Copyright (c) NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-*/
+**/
 
 package nvcaps
 
@@ -36,46 +36,67 @@ const (
 	nvcapsDevicePath     = "/dev/nvidia-caps"
 )
 
-type nvcapslib struct {
-	root string
-	caps MigCaps
+// migCapabilities stores a map of MIG cap file paths to MIG minors
+type migCapabilities struct {
+	lib         *nvcapslib
+	pathToMinor migCaps
 }
 
-var _ Interface = (*nvcapslib)(nil)
+type migMinor int
+type migCap string
+type migCaps map[migCap]migMinor
 
-// MigMinor represents the minor number of a MIG device
-type MigMinor int
-
-// MigCap represents the path to a MIG cap file
-type MigCap string
-
-// MigCaps stores a map of MIG cap file paths to MIG minors
-type MigCaps map[MigCap]MigMinor
-
-// NewGPUInstanceCap creates a MigCap for the specified MIG GPU instance.
-// A GPU instance is uniquely defined by the GPU minor number and GI instance ID.
-func (l *nvcapslib) NewGPUInstanceCap(gpu, gi int) MigCap {
-	return MigCap(fmt.Sprintf("/gpu%d/gi%d/access", gpu, gi))
-}
-
-// NewComputeInstanceCap creates a MigCap for the specified MIG Compute instance.
-// A GPU instance is uniquely defined by the GPU minor number, GI instance ID, and CI instance ID.
-func (l *nvcapslib) NewComputeInstanceCap(gpu, gi, ci int) MigCap {
-	return MigCap(fmt.Sprintf("/gpu%d/gi%d/ci%d/access", gpu, gi, ci))
-}
-
-// GetCapDevicePath returns the path to the cap device for the specified cap.
-// An error is returned if the cap is invalid.
-func (m MigCaps) GetCapDevicePath(cap MigCap) (string, error) {
-	minor, exists := m[cap]
-	if !exists {
-		return "", fmt.Errorf("invalid MIG capability path %v", cap)
+// NewMigCapabilities creates a
+func (c *nvcapslib) NewMigCapabilities() (Capabilities, error) {
+	migCaps, err := newMigCaps()
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct MIG caps: %v", err)
 	}
-	return minor.DevicePath(), nil
+
+	caps := migCapabilities{
+		lib:         c,
+		pathToMinor: migCaps,
+	}
+
+	return &caps, nil
 }
 
-// NewMigCaps creates a MigCaps structure based on the contents of the MIG minors file.
-func NewMigCaps() (MigCaps, error) {
+func (m *migCapabilities) GlobalMigMonitor() (Capability, error) {
+	return m.getCapability(migCap("mig/monitor"))
+}
+
+func (m *migCapabilities) GlobalMigConfig() (Capability, error) {
+	return m.getCapability(migCap("mig/config"))
+}
+
+func (m *migCapabilities) GPUInstanceAccess(gpu, gi int) (Capability, error) {
+	cap := migCap(fmt.Sprintf("gpu%d/gi%d/access", gpu, gi))
+	return m.getCapability(cap)
+}
+
+func (m *migCapabilities) ComputeInstanceAccess(gpu, gi, ci int) (Capability, error) {
+	cap := migCap(fmt.Sprintf("gpu%d/gi%d/ci%d/access", gpu, gi, ci))
+	return m.getCapability(cap)
+}
+
+func (m *migCapabilities) getCapability(cap migCap) (Capability, error) {
+	minor, exists := m.pathToMinor[cap]
+	if !exists {
+		return Capability{}, fmt.Errorf("invalid MIG capability %v", cap)
+	}
+
+	c := Capability{
+		ProcPath:    filepath.Join(m.lib.procRoot, cap.ProcPath()),
+		DevicePath:  filepath.Join(m.lib.devRoot, minor.DevicePath()),
+		DeviceMajor: m.lib.deviceMajor,
+		DeviceMinor: int(minor),
+	}
+
+	return c, nil
+}
+
+// newMigCaps creates a MigCaps structure based on the contents of the MIG minors file.
+func newMigCaps() (migCaps, error) {
 	// Open nvcapsMigMinorsPath for walking.
 	// If the nvcapsMigMinorsPath does not exist, then we are not on a MIG
 	// capable machine, so there is nothing to do.
@@ -93,10 +114,10 @@ func NewMigCaps() (MigCaps, error) {
 	return processMinorsFile(minorsFile), nil
 }
 
-func processMinorsFile(minorsFile io.Reader) MigCaps {
+func processMinorsFile(minorsFile io.Reader) migCaps {
 	// Walk each line of nvcapsMigMinorsPath and construct a mapping of nvidia
 	// capabilities path to device minor for that capability
-	migCaps := make(MigCaps)
+	migCaps := make(migCaps)
 	scanner := bufio.NewScanner(minorsFile)
 	for scanner.Scan() {
 		cap, minor, err := processMigMinorsLine(scanner.Text())
@@ -109,14 +130,14 @@ func processMinorsFile(minorsFile io.Reader) MigCaps {
 	return migCaps
 }
 
-func processMigMinorsLine(line string) (MigCap, MigMinor, error) {
+func processMigMinorsLine(line string) (migCap, migMinor, error) {
 	parts := strings.Split(line, " ")
 	if len(parts) != 2 {
 		return "", 0, fmt.Errorf("error processing line: %v", line)
 	}
 
-	migCap := MigCap(parts[0])
-	if !migCap.isValid() {
+	cap := migCap(parts[0])
+	if !cap.isValid() {
 		return "", 0, fmt.Errorf("invalid MIG minors line: '%v'", line)
 	}
 
@@ -125,10 +146,10 @@ func processMigMinorsLine(line string) (MigCap, MigMinor, error) {
 		return "", 0, fmt.Errorf("error reading MIG minor from '%v': %v", line, err)
 	}
 
-	return migCap, MigMinor(minor), nil
+	return cap, migMinor(minor), nil
 }
 
-func (m MigCap) isValid() bool {
+func (m migCap) isValid() bool {
 	cap := string(m)
 	switch cap {
 	case "config", "monitor":
@@ -152,7 +173,7 @@ func (m MigCap) isValid() bool {
 }
 
 // ProcPath returns the proc path associated with the MIG capability
-func (m MigCap) ProcPath() string {
+func (m migCap) ProcPath() string {
 	id := string(m)
 
 	var path string
@@ -168,6 +189,6 @@ func (m MigCap) ProcPath() string {
 
 // DevicePath returns the path for the nvidia-caps device with the specified
 // minor number
-func (m MigMinor) DevicePath() string {
+func (m migMinor) DevicePath() string {
 	return fmt.Sprintf(nvcapsDevicePath+"/nvidia-cap%d", m)
 }

@@ -27,14 +27,14 @@ import (
 func TestProcessMinorsFile(t *testing.T) {
 	testCases := []struct {
 		lines    []string
-		expected MigCaps
+		expected migCaps
 	}{
-		{[]string{}, MigCaps{}},
-		{[]string{"invalidLine"}, MigCaps{}},
-		{[]string{"config 1"}, MigCaps{"config": 1}},
-		{[]string{"gpu0/gi0/ci0/access 4"}, MigCaps{"gpu0/gi0/ci0/access": 4}},
-		{[]string{"config 1", "invalidLine"}, MigCaps{"config": 1}},
-		{[]string{"config 1", "gpu0/gi0/ci0/access 4"}, MigCaps{"config": 1, "gpu0/gi0/ci0/access": 4}},
+		{[]string{}, migCaps{}},
+		{[]string{"invalidLine"}, migCaps{}},
+		{[]string{"config 1"}, migCaps{"config": 1}},
+		{[]string{"gpu0/gi0/ci0/access 4"}, migCaps{"gpu0/gi0/ci0/access": 4}},
+		{[]string{"config 1", "invalidLine"}, migCaps{"config": 1}},
+		{[]string{"config 1", "gpu0/gi0/ci0/access 4"}, migCaps{"config": 1, "gpu0/gi0/ci0/access": 4}},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
@@ -48,8 +48,8 @@ func TestProcessMinorsFile(t *testing.T) {
 func TestProcessMigMinorsLine(t *testing.T) {
 	testCases := []struct {
 		line  string
-		cap   MigCap
-		minor MigMinor
+		cap   migCap
+		minor migMinor
 		err   bool
 	}{
 		{"config 1", "config", 1, false},
@@ -88,13 +88,13 @@ func TestMigCapProcPaths(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			m := MigCap(tc.input)
+			m := migCap(tc.input)
 			require.Equal(t, tc.expected, m.ProcPath())
 		})
 	}
 }
 
 func TestMigMinorDevicePath(t *testing.T) {
-	m := MigMinor(0)
+	m := migMinor(0)
 	require.Equal(t, "/dev/nvidia-caps/nvidia-cap0", m.DevicePath())
 }
