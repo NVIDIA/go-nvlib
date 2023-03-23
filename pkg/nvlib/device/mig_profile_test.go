@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 )
 
 func TestParseMigProfile(t *testing.T) {
@@ -256,7 +257,55 @@ func TestParseMigProfile(t *testing.T) {
 		},
 	}
 
-	d := New()
+	mockDevice := &nvml.DeviceMock{
+		GetNameFunc: func() (string, nvml.Return) {
+			return "MockDevice", nvml.SUCCESS
+		},
+		GetMigModeFunc: func() (int, int, nvml.Return) {
+			return nvml.DEVICE_MIG_ENABLE, nvml.DEVICE_MIG_ENABLE, nvml.SUCCESS
+		},
+		GetMemoryInfoFunc: func() (nvml.Memory, nvml.Return) {
+			memory := nvml.Memory{
+				Total: 40 * 1024 * 1024 * 1024,
+			}
+			return memory, nvml.SUCCESS
+		},
+		GetGpuInstanceProfileInfoFunc: func(Profile int) (nvml.GpuInstanceProfileInfo, nvml.Return) {
+			info := nvml.GpuInstanceProfileInfo{}
+			switch Profile {
+			case nvml.GPU_INSTANCE_PROFILE_1_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV1:
+				info.MemorySizeMB = 5 * 1024
+			case nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV2:
+				info.MemorySizeMB = 10 * 1024
+			case nvml.GPU_INSTANCE_PROFILE_2_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_REV1:
+				info.MemorySizeMB = 10 * 1024
+			case nvml.GPU_INSTANCE_PROFILE_3_SLICE:
+				info.MemorySizeMB = 20 * 1024
+			case nvml.GPU_INSTANCE_PROFILE_4_SLICE:
+				info.MemorySizeMB = 20 * 1024
+			case nvml.GPU_INSTANCE_PROFILE_7_SLICE:
+				info.MemorySizeMB = 40 * 1024
+			case nvml.GPU_INSTANCE_PROFILE_6_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_8_SLICE:
+				fallthrough
+			default:
+				return info, nvml.ERROR_NOT_SUPPORTED
+			}
+			return info, nvml.SUCCESS
+		},
+	}
+	mockNvml := &nvml.InterfaceMock{
+		DeviceGetCountFunc: func() (int, nvml.Return) {
+			return 1, nvml.SUCCESS
+		},
+		DeviceGetHandleByIndexFunc: func(Index int) (nvml.Device, nvml.Return) {
+			return mockDevice, nvml.SUCCESS
+		},
+	}
+
+	d := New(WithNvml(mockNvml), WithVerifySymbols(false))
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			_, err := d.ParseMigProfile(tc.device)
