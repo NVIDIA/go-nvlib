@@ -36,7 +36,8 @@ type Device interface {
 
 type device struct {
 	nvml.Device
-	lib *devicelib
+	lib         *devicelib
+	migProfiles []MigProfile
 }
 
 var _ Device = &device{}
@@ -57,12 +58,12 @@ func (d *devicelib) NewDeviceByUUID(uuid string) (Device, error) {
 
 // newDevice creates a device from an nvml.Device
 func (d *devicelib) newDevice(dev nvml.Device) (*device, error) {
-	return &device{dev, d}, nil
+	return &device{dev, d, nil}, nil
 }
 
 // IsMigCapable checks if a device is capable of having MIG paprtitions created on it
 func (d *device) IsMigCapable() (bool, error) {
-	err := nvmlLookupSymbol("nvmlDeviceGetMigMode")
+	err := d.lib.nvmlLookupSymbol("nvmlDeviceGetMigMode")
 	if err != nil {
 		return false, nil
 	}
@@ -80,7 +81,7 @@ func (d *device) IsMigCapable() (bool, error) {
 
 // IsMigEnabled checks if a device has MIG mode currently enabled on it
 func (d *device) IsMigEnabled() (bool, error) {
-	err := nvmlLookupSymbol("nvmlDeviceGetMigMode")
+	err := d.lib.nvmlLookupSymbol("nvmlDeviceGetMigMode")
 	if err != nil {
 		return false, nil
 	}
@@ -161,6 +162,20 @@ func (d *device) VisitMigProfiles(visit func(MigProfile) error) error {
 					return fmt.Errorf("error creating MIG profile: %v", err)
 				}
 
+				// NOTE: The NVML API doesn't currently let us query the set of
+				// valid Compute Instance profiles without first instantiating
+				// a GPU Instance to check against. In theory, it should be
+				// possible to get this information without a reference to a
+				// GPU instance, but no API is provided for that at the moment.
+				// We run the checks below to weed out invalid profiles
+				// heuristically, given what we know about how they are
+				// physically constructed. In the future we should do this via
+				// NVML once a proper API for this exists.
+				pi := p.GetInfo()
+				if (pi.C * 2) > (pi.G + 1) {
+					continue
+				}
+
 				err = visit(p)
 				if err != nil {
 					return fmt.Errorf("error visiting MIG profile: %v", err)
@@ -186,6 +201,12 @@ func (d *device) GetMigDevices() ([]MigDevice, error) {
 
 // GetMigProfiles gets the set of unique MIG profiles associated with a top-level device
 func (d *device) GetMigProfiles() ([]MigProfile, error) {
+	// Return the cached list if available
+	if d.migProfiles != nil {
+		return d.migProfiles, nil
+	}
+
+	// Otherwise generate it...
 	var profiles []MigProfile
 	err := d.VisitMigProfiles(func(p MigProfile) error {
 		profiles = append(profiles, p)
@@ -194,6 +215,9 @@ func (d *device) GetMigProfiles() ([]MigProfile, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// And cache it before returning
+	d.migProfiles = profiles
 	return profiles, nil
 }
 
@@ -333,7 +357,13 @@ func (d *devicelib) GetMigProfiles() ([]MigProfile, error) {
 }
 
 // nvmlLookupSymbol checks to see if the given symbol is present in the NVML library
-func nvmlLookupSymbol(symbol string) error {
+func (d *devicelib) nvmlLookupSymbol(symbol string) error {
+	// If devicelib is configured to not verify symbols, then we short-circuit here
+	if !*d.verifySymbols {
+		return nil
+	}
+
+	// Otherwise we lookup the provided symbol and verify it is available
 	lib := dl.New("libnvidia-ml.so.1", dl.RTLD_LAZY|dl.RTLD_GLOBAL)
 	if lib == nil {
 		return fmt.Errorf("error instantiating DynamicLibrary for NVML")
