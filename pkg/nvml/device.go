@@ -150,10 +150,16 @@ func (d nvmlDevice) GetAttributes() (DeviceAttributes, Return) {
 	return DeviceAttributes(a), Return(r)
 }
 
-// GetName returns the device attributes for a MIG device
+// GetName returns the product name of a Device
 func (d nvmlDevice) GetName() (string, Return) {
 	n, r := nvml.Device(d).GetName()
 	return n, Return(r)
+}
+
+// GetArchitecture returns the architecture of a Device
+func (d nvmlDevice) GetArchitecture() (DeviceArchitecture, Return) {
+	a, r := nvml.Device(d).GetArchitecture()
+	return DeviceArchitecture(a), Return(r)
 }
 
 // RegisterEvents registers the specified event set and type with the device

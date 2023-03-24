@@ -26,6 +26,8 @@ import (
 // Device defines the set of extended functions associated with a device.Device
 type Device interface {
 	nvml.Device
+	GetArchitectureAsString() (string, error)
+	GetCudaComputeCapabilityAsString() (string, error)
 	GetMigDevices() ([]MigDevice, error)
 	GetMigProfiles() ([]MigProfile, error)
 	IsMigCapable() (bool, error)
@@ -59,6 +61,44 @@ func (d *devicelib) NewDeviceByUUID(uuid string) (Device, error) {
 // newDevice creates a device from an nvml.Device
 func (d *devicelib) newDevice(dev nvml.Device) (*device, error) {
 	return &device{dev, d, nil}, nil
+}
+
+// GetArchitectureAsString returns the Device architecture as a string
+func (d *device) GetArchitectureAsString() (string, error) {
+	arch, ret := d.GetArchitecture()
+	if ret != nvml.SUCCESS {
+		return "", fmt.Errorf("error getting device architecture: %v", ret)
+	}
+	switch arch {
+	case nvml.DEVICE_ARCH_KEPLER:
+		return "Kepler", nil
+	case nvml.DEVICE_ARCH_MAXWELL:
+		return "Maxwell", nil
+	case nvml.DEVICE_ARCH_PASCAL:
+		return "Pascal", nil
+	case nvml.DEVICE_ARCH_VOLTA:
+		return "Volta", nil
+	case nvml.DEVICE_ARCH_TURING:
+		return "Turing", nil
+	case nvml.DEVICE_ARCH_AMPERE:
+		return "Ampere", nil
+	case nvml.DEVICE_ARCH_ADA:
+		return "Ada", nil
+	case nvml.DEVICE_ARCH_HOPPER:
+		return "Hopper", nil
+	case nvml.DEVICE_ARCH_UNKNOWN:
+		return "Unknown", nil
+	}
+	return "", fmt.Errorf("error interpreting device architecture as string: %v", arch)
+}
+
+// GetCudaComputeCapabilityAsString returns the Device's CUDA compute capability as a version string
+func (d *device) GetCudaComputeCapabilityAsString() (string, error) {
+	major, minor, ret := d.GetCudaComputeCapability()
+	if ret != nvml.SUCCESS {
+		return "", fmt.Errorf("error getting CUDA compute capability: %v", ret)
+	}
+	return fmt.Sprintf("%d.%d", major, minor), nil
 }
 
 // IsMigCapable checks if a device is capable of having MIG paprtitions created on it
