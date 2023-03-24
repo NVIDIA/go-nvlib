@@ -20,6 +20,9 @@ var _ Device = &DeviceMock{}
 //			CreateGpuInstanceWithPlacementFunc: func(gpuInstanceProfileInfo *GpuInstanceProfileInfo, gpuInstancePlacement *GpuInstancePlacement) (GpuInstance, Return) {
 //				panic("mock out the CreateGpuInstanceWithPlacement method")
 //			},
+//			GetArchitectureFunc: func() (DeviceArchitecture, Return) {
+//				panic("mock out the GetArchitecture method")
+//			},
 //			GetAttributesFunc: func() (DeviceAttributes, Return) {
 //				panic("mock out the GetAttributes method")
 //			},
@@ -96,6 +99,9 @@ type DeviceMock struct {
 	// CreateGpuInstanceWithPlacementFunc mocks the CreateGpuInstanceWithPlacement method.
 	CreateGpuInstanceWithPlacementFunc func(gpuInstanceProfileInfo *GpuInstanceProfileInfo, gpuInstancePlacement *GpuInstancePlacement) (GpuInstance, Return)
 
+	// GetArchitectureFunc mocks the GetArchitecture method.
+	GetArchitectureFunc func() (DeviceArchitecture, Return)
+
 	// GetAttributesFunc mocks the GetAttributes method.
 	GetAttributesFunc func() (DeviceAttributes, Return)
 
@@ -170,6 +176,9 @@ type DeviceMock struct {
 			GpuInstanceProfileInfo *GpuInstanceProfileInfo
 			// GpuInstancePlacement is the gpuInstancePlacement argument value.
 			GpuInstancePlacement *GpuInstancePlacement
+		}
+		// GetArchitecture holds details about calls to the GetArchitecture method.
+		GetArchitecture []struct {
 		}
 		// GetAttributes holds details about calls to the GetAttributes method.
 		GetAttributes []struct {
@@ -255,6 +264,7 @@ type DeviceMock struct {
 		}
 	}
 	lockCreateGpuInstanceWithPlacement     sync.RWMutex
+	lockGetArchitecture                    sync.RWMutex
 	lockGetAttributes                      sync.RWMutex
 	lockGetComputeInstanceId               sync.RWMutex
 	lockGetCudaComputeCapability           sync.RWMutex
@@ -312,6 +322,33 @@ func (mock *DeviceMock) CreateGpuInstanceWithPlacementCalls() []struct {
 	mock.lockCreateGpuInstanceWithPlacement.RLock()
 	calls = mock.calls.CreateGpuInstanceWithPlacement
 	mock.lockCreateGpuInstanceWithPlacement.RUnlock()
+	return calls
+}
+
+// GetArchitecture calls GetArchitectureFunc.
+func (mock *DeviceMock) GetArchitecture() (DeviceArchitecture, Return) {
+	if mock.GetArchitectureFunc == nil {
+		panic("DeviceMock.GetArchitectureFunc: method is nil but Device.GetArchitecture was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetArchitecture.Lock()
+	mock.calls.GetArchitecture = append(mock.calls.GetArchitecture, callInfo)
+	mock.lockGetArchitecture.Unlock()
+	return mock.GetArchitectureFunc()
+}
+
+// GetArchitectureCalls gets all the calls that were made to GetArchitecture.
+// Check the length with:
+//
+//	len(mockedDevice.GetArchitectureCalls())
+func (mock *DeviceMock) GetArchitectureCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetArchitecture.RLock()
+	calls = mock.calls.GetArchitecture
+	mock.lockGetArchitecture.RUnlock()
 	return calls
 }
 
