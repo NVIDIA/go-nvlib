@@ -385,6 +385,12 @@ func (d *devicelib) GetMigDevices() ([]MigDevice, error) {
 
 // GetMigProfiles gets the set of unique MIG profiles across all top-level devices
 func (d *devicelib) GetMigProfiles() ([]MigProfile, error) {
+	// Return the cached list if available
+	if d.migProfiles != nil {
+		return d.migProfiles, nil
+	}
+
+	// Otherwise generate it...
 	var profiles []MigProfile
 	err := d.VisitMigProfiles(func(p MigProfile) error {
 		profiles = append(profiles, p)
@@ -393,6 +399,9 @@ func (d *devicelib) GetMigProfiles() ([]MigProfile, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// And cache it before returning
+	d.migProfiles = profiles
 	return profiles, nil
 }
 

@@ -40,6 +40,7 @@ type devicelib struct {
 	nvml           nvml.Interface
 	skippedDevices map[string]struct{}
 	verifySymbols  *bool
+	migProfiles    []MigProfile
 }
 
 var _ Interface = &devicelib{}
