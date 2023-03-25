@@ -212,7 +212,10 @@ func (d *device) VisitMigProfiles(visit func(MigProfile) error) error {
 				// physically constructed. In the future we should do this via
 				// NVML once a proper API for this exists.
 				pi := p.GetInfo()
-				if (pi.C * 2) > (pi.G + 1) {
+				if pi.C > pi.G {
+					continue
+				}
+				if (pi.C < pi.G) && ((pi.C * 2) > (pi.G + 1)) {
 					continue
 				}
 
