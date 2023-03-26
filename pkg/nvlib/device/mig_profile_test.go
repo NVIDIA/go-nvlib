@@ -24,6 +24,10 @@ import (
 	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 )
 
+type MigProfileInfoWrapper struct {
+	MigProfileInfo
+}
+
 func newMockDeviceLib() Interface {
 	mockDevice := &nvml.DeviceMock{
 		GetNameFunc: func() (string, nvml.Return) {
@@ -357,6 +361,70 @@ func TestParseMigProfile(t *testing.T) {
 				require.Nil(t, err)
 			} else {
 				require.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestParseMigProfileEquals(t *testing.T) {
+	testCases := []struct {
+		description string
+		profile1    string
+		profile2    string
+		valid       bool
+	}{
+		{
+			"Exactly equal",
+			"1g.5gb",
+			"1g.5gb",
+			true,
+		},
+		{
+			"Equal when expanded",
+			"1c.1g.5gb",
+			"1g.5gb",
+			true,
+		},
+		{
+			"Equal with attributes",
+			"1g.5gb+me",
+			"1g.5gb+me",
+			true,
+		},
+		{
+			"Not equal C slices",
+			"1c.2g.10gb",
+			"2c.2g.10gb",
+			false,
+		},
+		{
+			"Not equal G slices",
+			"1c.1g.10gb",
+			"1c.2g.10gb",
+			false,
+		},
+		{
+			"Not equal attributes",
+			"1g.5gb",
+			"1g.5gb+me",
+			false,
+		},
+	}
+
+	d := newMockDeviceLib()
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			p1, err := d.ParseMigProfile(tc.profile1)
+			require.Nil(t, err)
+			p2, err := d.ParseMigProfile(tc.profile2)
+			require.Nil(t, err)
+			wrapper := MigProfileInfoWrapper{p2.GetInfo()}
+			if tc.valid {
+				require.True(t, p1.Equals(p2))
+				require.True(t, p1.Equals(wrapper))
+			} else {
+				require.False(t, p1.Equals(p2))
+				require.False(t, p1.Equals(wrapper))
 			}
 		})
 	}
