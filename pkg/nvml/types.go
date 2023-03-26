@@ -42,6 +42,7 @@ type Device interface {
 	CreateGpuInstanceWithPlacement(*GpuInstanceProfileInfo, *GpuInstancePlacement) (GpuInstance, Return)
 	GetArchitecture() (DeviceArchitecture, Return)
 	GetAttributes() (DeviceAttributes, Return)
+	GetBrand() (BrandType, Return)
 	GetComputeInstanceId() (int, Return)
 	GetCudaComputeCapability() (int, int, Return)
 	GetDeviceHandleFromMigDeviceHandle() (Device, Return)
@@ -140,3 +141,6 @@ type DeviceAttributes nvml.DeviceAttributes
 
 // DeviceArchitecture represents the hardware architecture of a GPU device
 type DeviceArchitecture nvml.DeviceArchitecture
+
+// BrandType represents the brand of a GPU device
+type BrandType nvml.BrandType

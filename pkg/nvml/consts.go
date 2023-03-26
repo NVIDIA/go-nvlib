@@ -62,6 +62,29 @@ const (
 	DEVICE_ARCH_UNKNOWN = nvml.DEVICE_ARCH_UNKNOWN
 )
 
+// Device brand constants
+const (
+	BRAND_UNKNOWN             = BrandType(nvml.BRAND_UNKNOWN)
+	BRAND_QUADRO              = BrandType(nvml.BRAND_QUADRO)
+	BRAND_TESLA               = BrandType(nvml.BRAND_TESLA)
+	BRAND_NVS                 = BrandType(nvml.BRAND_NVS)
+	BRAND_GRID                = BrandType(nvml.BRAND_GRID)
+	BRAND_GEFORCE             = BrandType(nvml.BRAND_GEFORCE)
+	BRAND_TITAN               = BrandType(nvml.BRAND_TITAN)
+	BRAND_NVIDIA_VAPPS        = BrandType(nvml.BRAND_NVIDIA_VAPPS)
+	BRAND_NVIDIA_VPC          = BrandType(nvml.BRAND_NVIDIA_VPC)
+	BRAND_NVIDIA_VCS          = BrandType(nvml.BRAND_NVIDIA_VCS)
+	BRAND_NVIDIA_VWS          = BrandType(nvml.BRAND_NVIDIA_VWS)
+	BRAND_NVIDIA_CLOUD_GAMING = BrandType(nvml.BRAND_NVIDIA_CLOUD_GAMING)
+	BRAND_NVIDIA_VGAMING      = BrandType(nvml.BRAND_NVIDIA_VGAMING)
+	BRAND_QUADRO_RTX          = BrandType(nvml.BRAND_QUADRO_RTX)
+	BRAND_NVIDIA_RTX          = BrandType(nvml.BRAND_NVIDIA_RTX)
+	BRAND_NVIDIA              = BrandType(nvml.BRAND_NVIDIA)
+	BRAND_GEFORCE_RTX         = BrandType(nvml.BRAND_GEFORCE_RTX)
+	BRAND_TITAN_RTX           = BrandType(nvml.BRAND_TITAN_RTX)
+	BRAND_COUNT               = BrandType(nvml.BRAND_COUNT)
+)
+
 // MIG Mode constants
 const (
 	DEVICE_MIG_ENABLE  = nvml.DEVICE_MIG_ENABLE

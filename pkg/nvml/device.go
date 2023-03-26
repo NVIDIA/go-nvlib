@@ -156,6 +156,12 @@ func (d nvmlDevice) GetName() (string, Return) {
 	return n, Return(r)
 }
 
+// GetBrand returns the brand of a Device
+func (d nvmlDevice) GetBrand() (BrandType, Return) {
+	b, r := nvml.Device(d).GetBrand()
+	return BrandType(b), Return(r)
+}
+
 // GetArchitecture returns the architecture of a Device
 func (d nvmlDevice) GetArchitecture() (DeviceArchitecture, Return) {
 	a, r := nvml.Device(d).GetArchitecture()
