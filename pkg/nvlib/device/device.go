@@ -27,6 +27,7 @@ import (
 type Device interface {
 	nvml.Device
 	GetArchitectureAsString() (string, error)
+	GetBrandAsString() (string, error)
 	GetCudaComputeCapabilityAsString() (string, error)
 	GetMigDevices() ([]MigDevice, error)
 	GetMigProfiles() ([]MigProfile, error)
@@ -90,6 +91,54 @@ func (d *device) GetArchitectureAsString() (string, error) {
 		return "Unknown", nil
 	}
 	return "", fmt.Errorf("error interpreting device architecture as string: %v", arch)
+}
+
+// GetBrandAsString returns the Device architecture as a string
+func (d *device) GetBrandAsString() (string, error) {
+	brand, ret := d.GetBrand()
+	if ret != nvml.SUCCESS {
+		return "", fmt.Errorf("error getting device brand: %v", ret)
+	}
+	switch brand {
+	case nvml.BRAND_UNKNOWN:
+		return "Unknown", nil
+	case nvml.BRAND_QUADRO:
+		return "Quadro", nil
+	case nvml.BRAND_TESLA:
+		return "Tesla", nil
+	case nvml.BRAND_NVS:
+		return "NVS", nil
+	case nvml.BRAND_GRID:
+		return "Grid", nil
+	case nvml.BRAND_GEFORCE:
+		return "GeForce", nil
+	case nvml.BRAND_TITAN:
+		return "Titan", nil
+	case nvml.BRAND_NVIDIA_VAPPS:
+		return "NvidiaVApps", nil
+	case nvml.BRAND_NVIDIA_VPC:
+		return "NvidiaVPC", nil
+	case nvml.BRAND_NVIDIA_VCS:
+		return "NvidiaVCS", nil
+	case nvml.BRAND_NVIDIA_VWS:
+		return "NvidiaVWS", nil
+	// Deprecated in favor of nvml.BRAND_NVIDIA_CLOUD_GAMING
+	//case nvml.BRAND_NVIDIA_VGAMING:
+	//	return "VGaming", nil
+	case nvml.BRAND_NVIDIA_CLOUD_GAMING:
+		return "NvidiaCloudGaming", nil
+	case nvml.BRAND_QUADRO_RTX:
+		return "QuadroRTX", nil
+	case nvml.BRAND_NVIDIA_RTX:
+		return "NvidiaRTX", nil
+	case nvml.BRAND_NVIDIA:
+		return "Nvidia", nil
+	case nvml.BRAND_GEFORCE_RTX:
+		return "GeForceRTX", nil
+	case nvml.BRAND_TITAN_RTX:
+		return "TitanRTX", nil
+	}
+	return "", fmt.Errorf("error interpreting device brand as string: %v", brand)
 }
 
 // GetCudaComputeCapabilityAsString returns the Device's CUDA compute capability as a version string
