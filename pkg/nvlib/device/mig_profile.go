@@ -119,6 +119,12 @@ func (d *devicelib) NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, 
 	return p, nil
 }
 
+// AssertValidMigProfileFormat checks if the string is in the proper format to represent a MIG profile
+func (d *devicelib) AssertValidMigProfileFormat(profile string) error {
+	_, _, _, _, err := parseMigProfile(profile)
+	return err
+}
+
 // ParseMigProfile converts a string representation of a MigProfile into an object
 func (d *devicelib) ParseMigProfile(profile string) (MigProfile, error) {
 	profiles, err := d.GetMigProfiles()
@@ -181,16 +187,7 @@ func (p *MigProfileInfo) Equals(other MigProfile) bool {
 
 // Matches checks if a MigProfile matches the string passed in
 func (p *MigProfileInfo) Matches(profile string) bool {
-	// If we are handed the empty string, there is nothing to check
-	if profile == "" {
-		return false
-	}
-
-	// Split by + to separate out attributes
-	split := strings.SplitN(profile, "+", 2)
-
-	// Check to make sure the c, g, and gb values match
-	c, g, gb, err := parseMigProfileFields(split[0])
+	c, g, gb, attrs, err := parseMigProfile(profile)
 	if err != nil {
 		return false
 	}
@@ -203,17 +200,6 @@ func (p *MigProfileInfo) Matches(profile string) bool {
 	if gb != p.GB {
 		return false
 	}
-
-	// If we have no attributes we are done
-	if len(split) == 1 {
-		return true
-	}
-
-	// Make sure we have the same set of attributes
-	attrs, err := parseMigProfileAttributes(split[1])
-	if err != nil {
-		return false
-	}
 	if len(attrs) != len(p.Attributes) {
 		return false
 	}
@@ -224,8 +210,36 @@ func (p *MigProfileInfo) Matches(profile string) bool {
 			return false
 		}
 	}
-
 	return true
+}
+
+func parseMigProfile(profile string) (int, int, int, []string, error) {
+	// If we are handed the empty string, we cannot parse it
+	if profile == "" {
+		return -1, -1, -1, nil, fmt.Errorf("profile is the empty string")
+	}
+
+	// Split by + to separate out attributes
+	split := strings.SplitN(profile, "+", 2)
+
+	// Check to make sure the c, g, and gb values match
+	c, g, gb, err := parseMigProfileFields(split[0])
+	if err != nil {
+		return -1, -1, -1, nil, fmt.Errorf("cannot parse fields of '%v': %v", profile, err)
+	}
+
+	// If we have no attributes we are done
+	if len(split) == 1 {
+		return c, g, gb, nil, nil
+	}
+
+	// Make sure we have the same set of attributes
+	attrs, err := parseMigProfileAttributes(split[1])
+	if err != nil {
+		return -1, -1, -1, nil, fmt.Errorf("cannot parse attributes of '%v': %v", profile, err)
+	}
+
+	return c, g, gb, attrs, nil
 }
 
 func parseMigProfileField(s string, field string) (int, error) {

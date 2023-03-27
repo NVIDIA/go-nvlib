@@ -22,6 +22,7 @@ import (
 
 // Interface provides the API to the 'device' package
 type Interface interface {
+	AssertValidMigProfileFormat(profile string) error
 	GetDevices() ([]Device, error)
 	GetMigDevices() ([]MigDevice, error)
 	GetMigProfiles() ([]MigProfile, error)
