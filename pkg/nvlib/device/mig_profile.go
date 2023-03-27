@@ -142,7 +142,7 @@ func (d *devicelib) ParseMigProfile(profile string) (MigProfile, error) {
 }
 
 // String returns the string representation of a Profile
-func (p *MigProfileInfo) String() string {
+func (p MigProfileInfo) String() string {
 	var suffix string
 	if len(p.Attributes) > 0 {
 		suffix = "+" + strings.Join(p.Attributes, ",")
@@ -154,39 +154,36 @@ func (p *MigProfileInfo) String() string {
 }
 
 // GetInfo returns detailed info about a Profile
-func (p *MigProfileInfo) GetInfo() MigProfileInfo {
-	return *p
+func (p MigProfileInfo) GetInfo() MigProfileInfo {
+	return p
 }
 
 // Equals checks if two Profiles are identical or not
-func (p *MigProfileInfo) Equals(other MigProfile) bool {
-	switch o := other.(type) {
-	case *MigProfileInfo:
-		if p.C != o.C {
-			return false
-		}
-		if p.G != o.G {
-			return false
-		}
-		if p.GB != o.GB {
-			return false
-		}
-		if p.GIProfileID != o.GIProfileID {
-			return false
-		}
-		if p.CIProfileID != o.CIProfileID {
-			return false
-		}
-		if p.CIEngProfileID != o.CIEngProfileID {
-			return false
-		}
-		return true
+func (p MigProfileInfo) Equals(other MigProfile) bool {
+	o := other.GetInfo()
+	if p.C != o.C {
+		return false
 	}
-	return false
+	if p.G != o.G {
+		return false
+	}
+	if p.GB != o.GB {
+		return false
+	}
+	if p.GIProfileID != o.GIProfileID {
+		return false
+	}
+	if p.CIProfileID != o.CIProfileID {
+		return false
+	}
+	if p.CIEngProfileID != o.CIEngProfileID {
+		return false
+	}
+	return true
 }
 
 // Matches checks if a MigProfile matches the string passed in
-func (p *MigProfileInfo) Matches(profile string) bool {
+func (p MigProfileInfo) Matches(profile string) bool {
 	c, g, gb, attrs, err := parseMigProfile(profile)
 	if err != nil {
 		return false
