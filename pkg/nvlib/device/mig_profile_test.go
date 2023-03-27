@@ -28,231 +28,265 @@ func TestParseMigProfile(t *testing.T) {
 	testCases := []struct {
 		description string
 		device      string
-		valid       bool
+		validFormat bool
+		validDevice bool
 	}{
 		{
 			"Empty device type",
 			"",
+			false,
 			false,
 		},
 		{
 			"Valid 1g.5gb",
 			"1g.5gb",
 			true,
+			true,
 		},
 		{
 			"Valid 1c.1g.5gb",
 			"1c.1g.5gb",
+			true,
 			true,
 		},
 		{
 			"Valid 1g.5gb+me",
 			"1g.5gb+me",
 			true,
+			true,
 		},
 		{
 			"Valid 1c.1g.5gb+me",
 			"1c.1g.5gb+me",
 			true,
+			true,
 		},
 		{
 			"Invalid 0g.0gb",
 			"0g.0gb",
+			true,
 			false,
 		},
 		{
 			"Invalid 0c.0g.0gb",
 			"0c.0g.0gb",
+			true,
 			false,
 		},
 		{
 			"Invalid 10000g.500000gb",
 			"10000g.500000gb",
+			true,
 			false,
 		},
 		{
 			"Invalid 10000c.10000g.500000gb",
 			"10000c.10000g.500000gb",
+			true,
 			false,
 		},
 		{
 			"Invalid ' 1c.1g.5gb'",
 			" 1c.1g.5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid '1 c.1g.5gb'",
 			"1 c.1g.5gb",
+			false,
 			false,
 		},
 		{
 			"Invalid '1c .1g.5gb'",
 			"1c .1g.5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid '1c. 1g.5gb'",
 			"1c. 1g.5gb",
+			false,
 			false,
 		},
 		{
 			"Invalid '1c.1 g.5gb'",
 			"1c.1 g.5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid '1c.1g .5gb'",
 			"1c.1g .5gb",
+			false,
 			false,
 		},
 		{
 			"Invalid '1c.1g. 5gb'",
 			"1c.1g. 5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid '1c.1g.5 gb'",
 			"1c.1g.5 gb",
+			false,
 			false,
 		},
 		{
 			"Invalid '1c.1g.5g b'",
 			"1c.1g.5g b",
 			false,
+			false,
 		},
 		{
 			"Invalid '1c.1g.5gb '",
 			"1c.1g.5gb ",
+			false,
 			false,
 		},
 		{
 			"Invalid '1c . 1g . 5gb'",
 			"1c . 1g . 5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid 1c.f1g.5gb",
 			"1c.f1g.5gb",
+			false,
 			false,
 		},
 		{
 			"Invalid 1r.1g.5gb",
 			"1r.1g.5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid 1g.5gbk",
 			"1g.5gbk",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5",
 			"1g.5",
 			false,
-		},
-		{
-			"Invalid g.5gb",
-			"1g.5",
 			false,
 		},
 		{
 			"Invalid g.5gb",
 			"g.5gb",
 			false,
+			false,
 		},
 		{
 			"Invalid 1g.gb",
 			"1g.gb",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+me,me",
 			"1g.5gb+me,me",
 			false,
+			false,
 		},
 		{
 			"Invalid 1g.5gb+me,you,them",
 			"1g.5gb+me,you,them",
+			true,
 			false,
 		},
 		{
 			"Invalid 1c.1g.5gb+me,you,them",
 			"1c.1g.5gb+me,you,them",
+			true,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+",
 			"1g.5gb+",
 			false,
+			false,
 		},
 		{
 			"Invalid 1g.5gb +",
-			"1g.5gb+",
+			"1g.5gb +",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+ ",
-			"1g.5gb+",
+			"1g.5gb+ ",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+ ,",
-			"1g.5gb+",
+			"1g.5gb+ ,",
 			false,
-		},
-		{
-			"Invalid 1g.5gb+,",
-			"1g.5gb+",
 			false,
 		},
 		{
 			"Invalid 1g.5gb+,,",
-			"1g.5gb+",
+			"1g.5gb+,,",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+me,",
-			"1g.5gb+",
+			"1g.5gb+me,",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+me,,",
-			"1g.5gb+",
+			"1g.5gb+me,,",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+me, ",
-			"1g.5gb+",
+			"1g.5gb+me, ",
+			false,
 			false,
 		},
 		{
 			"Invalid 1g.5gb+2me",
 			"1g.5gb+2me",
 			false,
+			false,
 		},
 		{
 			"Inavlid 1g.5gb*me",
 			"1g.5gb*me",
+			false,
 			false,
 		},
 		{
 			"Invalid 1c.1g.5gb*me",
 			"1c.1g.5gb*me",
 			false,
+			false,
 		},
 		{
 			"Invalid 1g.5gb*me,you,them",
 			"1g.5gb*me,you,them",
+			false,
 			false,
 		},
 		{
 			"Invalid 1c.1g.5gb*me,you,them",
 			"1c.1g.5gb*me,you,them",
 			false,
+			false,
 		},
 		{
 			"Invalid bogus",
 			"bogus",
+			false,
 			false,
 		},
 	}
@@ -308,8 +342,14 @@ func TestParseMigProfile(t *testing.T) {
 	d := New(WithNvml(mockNvml), WithVerifySymbols(false))
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			_, err := d.ParseMigProfile(tc.device)
-			if tc.valid {
+			err := d.AssertValidMigProfileFormat(tc.device)
+			if tc.validFormat {
+				require.Nil(t, err)
+			} else {
+				require.Error(t, err)
+			}
+			_, err = d.ParseMigProfile(tc.device)
+			if tc.validDevice {
 				require.Nil(t, err)
 			} else {
 				require.Error(t, err)
