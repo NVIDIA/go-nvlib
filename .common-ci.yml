@@ -81,4 +81,4 @@ unit-tests:
     - .requires-build-image
   stage: test
   script:
-    - make docker-test
+    - make docker-coverage
