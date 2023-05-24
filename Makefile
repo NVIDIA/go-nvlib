@@ -25,8 +25,8 @@ endif
 IMAGE_TAG ?= $(GOLANG_VERSION)
 BUILDIMAGE ?= $(IMAGE):$(IMAGE_TAG)-devel
 
-TARGETS := binary build all check fmt assert-fmt generate lint vet test
-DOCKER_TARGETS := $(patsubst %, docker-%, $(TARGETS))
+TARGETS := binary build all check fmt assert-fmt generate lint vet test coverage
+DOCKER_TARGETS := $(patsubst %,docker-%, $(TARGETS))
 .PHONY: $(TARGETS) $(DOCKER_TARGETS)
 
 GOOS := linux
@@ -64,8 +64,14 @@ lint:
 vet:
 	go vet $(MODULE)/...
 
-test:
-	go test $(MODULE)/...
+COVERAGE_FILE := coverage.out
+test: build
+	go test -v -coverprofile=$(COVERAGE_FILE) $(MODULE)/...
+
+coverage: test
+	cat $(COVERAGE_FILE) | grep -v "_mock.go" > $(COVERAGE_FILE).no-mocks
+	go tool cover -func=$(COVERAGE_FILE).no-mocks
+
 
 # Generate an image for containerized builds
 # Note: This image is local only
