@@ -253,18 +253,32 @@ var _ Interface = (*pcidb)(nil)
 
 // Interface returns textual description of specific attributes of PCI devices
 type Interface interface {
-	GetDeviceName(uint16, uint16) string
-	GetClassName(uint32) string
+	GetDeviceName(uint16, uint16) (string, error)
+	GetClassName(uint32) (string, error)
 }
 
 // GetDeviceName return the textual description of the PCI device
-func (d *pcidb) GetDeviceName(vendorID uint16, deviceID uint16) string {
-	return d.vendors[vendorID].devices[deviceID].name
+func (d *pcidb) GetDeviceName(vendorID uint16, deviceID uint16) (string, error) {
+	vendor, ok := d.vendors[vendorID]
+	if !ok {
+		return "", fmt.Errorf("failed to find vendor with id '%x'", vendorID)
+	}
+
+	device, ok := vendor.devices[deviceID]
+	if !ok {
+		return "", fmt.Errorf("failed to find device with id '%x'", deviceID)
+	}
+
+	return device.name, nil
 }
 
 // GetClassName resturn the textual description of the PCI device class
-func (d *pcidb) GetClassName(classID uint32) string {
-	return d.classes[classID].name
+func (d *pcidb) GetClassName(classID uint32) (string, error) {
+	class, ok := d.classes[classID]
+	if !ok {
+		return "", fmt.Errorf("failed to find class with id '%x'", classID)
+	}
+	return class.name, nil
 }
 
 // pcidb  The complete set of PCI vendors and  PCI classes

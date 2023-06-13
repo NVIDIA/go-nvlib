@@ -302,6 +302,15 @@ func (p *nvpci) GetGPUByPciBusID(address string) (*NvidiaPCIDevice, error) {
 
 	pciDB := pciids.NewDB()
 
+	deviceName, err := pciDB.GetDeviceName(uint16(vendorID), uint16(deviceID))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get device name: %v", err)
+	}
+	className, err := pciDB.GetClassName(uint32(classID))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get class name for device: %v", err)
+	}
+
 	nvdevice := &NvidiaPCIDevice{
 		Path:       devicePath,
 		Address:    address,
@@ -314,8 +323,8 @@ func (p *nvpci) GetGPUByPciBusID(address string) (*NvidiaPCIDevice, error) {
 		Config:     config,
 		Resources:  resources,
 		IsVF:       isVF,
-		DeviceName: pciDB.GetDeviceName(uint16(vendorID), uint16(deviceID)),
-		ClassName:  pciDB.GetClassName(uint32(classID)),
+		DeviceName: deviceName,
+		ClassName:  className,
 	}
 
 	return nvdevice, nil
