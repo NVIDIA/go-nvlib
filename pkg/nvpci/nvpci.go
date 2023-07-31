@@ -39,6 +39,10 @@ const (
 	PCI3dControllerClass uint32 = 0x030200
 	// PCINvSwitchClass represents the PCI class for NVSwitches
 	PCINvSwitchClass uint32 = 0x068000
+	// UnknownDeviceString is the device name to set for devices not found in the PCI database
+	UnknownDeviceString = "UNKNOWN_DEVICE"
+	// UnknownClassString is the class name to set for devices not found in the PCI database
+	UnknownClassString = "UNKNOWN_CLASS"
 )
 
 // Interface allows us to get a list of all NVIDIA PCI devices
@@ -304,11 +308,13 @@ func (p *nvpci) GetGPUByPciBusID(address string) (*NvidiaPCIDevice, error) {
 
 	deviceName, err := pciDB.GetDeviceName(uint16(vendorID), uint16(deviceID))
 	if err != nil {
-		return nil, fmt.Errorf("unable to get device name: %v", err)
+		fmt.Printf("WARNING: unable to get device name: %v\n", err)
+		deviceName = UnknownDeviceString
 	}
 	className, err := pciDB.GetClassName(uint32(classID))
 	if err != nil {
-		return nil, fmt.Errorf("unable to get class name for device: %v", err)
+		fmt.Printf("WARNING: unable to get class name for device: %v\n", err)
+		className = UnknownClassString
 	}
 
 	nvdevice := &NvidiaPCIDevice{
