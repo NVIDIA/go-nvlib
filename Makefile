@@ -24,6 +24,7 @@ IMAGE=$(REGISTRY)/go-nvlib
 endif
 IMAGE_TAG ?= $(GOLANG_VERSION)
 BUILDIMAGE ?= $(IMAGE):$(IMAGE_TAG)-devel
+PCI_IDS_URL ?= https://pci-ids.ucw.cz/v2.2/pci.ids
 
 TARGETS := binary build all check fmt assert-fmt generate lint vet test coverage
 DOCKER_TARGETS := $(patsubst %,docker-%, $(TARGETS))
@@ -72,6 +73,8 @@ coverage: test
 	cat $(COVERAGE_FILE) | grep -v "_mock.go" > $(COVERAGE_FILE).no-mocks
 	go tool cover -func=$(COVERAGE_FILE).no-mocks
 
+update-pcidb:
+	wget $(PCI_IDS_URL) -O $(CURDIR)/pkg/pciids/default_pci.ids
 
 # Generate an image for containerized builds
 # Note: This image is local only
