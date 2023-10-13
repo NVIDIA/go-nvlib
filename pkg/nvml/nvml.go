@@ -34,6 +34,12 @@ func New() Interface {
 	return &nvmlLib{}
 }
 
+// Lookup checks whether the specified symbol exists in the configured NVML library.
+func (n *nvmlLib) Lookup(name string) error {
+	// TODO: For now we rely on the default NVML library and perform the lookups against this.
+	return nvml.GetLibrary().Lookup(name)
+}
+
 // Init initializes an NVML Interface
 func (n *nvmlLib) Init() Return {
 	ret := nvml.Init()
