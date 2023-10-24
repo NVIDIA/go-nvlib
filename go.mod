@@ -3,7 +3,7 @@ module gitlab.com/nvidia/cloud-native/go-nvlib
 go 1.20
 
 require (
-	github.com/NVIDIA/go-nvml v0.12.0-1
+	github.com/NVIDIA/go-nvml v0.12.0-1.0.20231020145430-e06766c5e74f
 	github.com/stretchr/testify v1.8.4
 )
 
