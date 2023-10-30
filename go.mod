@@ -1,4 +1,4 @@
-module gitlab.com/nvidia/cloud-native/go-nvlib
+module github.com/NVIDIA/go-nvlib
 
 go 1.20
 

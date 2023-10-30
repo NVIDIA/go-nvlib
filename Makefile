@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MODULE := gitlab.com/nvidia/cloud-native/go-nvlib
+MODULE := github.com/NVIDIA/go-nvlib
 
 DOCKER ?= docker
 
