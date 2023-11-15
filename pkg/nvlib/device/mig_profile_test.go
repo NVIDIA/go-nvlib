@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NVIDIA/go-nvlib/pkg/nvml"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 )
 
 type MigProfileInfoWrapper struct {
