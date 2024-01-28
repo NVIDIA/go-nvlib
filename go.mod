@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/NVIDIA/go-nvml v0.12.0-2
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.8.4
 )
 
