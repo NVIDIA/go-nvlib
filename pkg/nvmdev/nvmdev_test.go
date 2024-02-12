@@ -17,8 +17,9 @@
 package nvmdev
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNvmdev(t *testing.T) {
@@ -54,7 +55,8 @@ func TestNvmdev(t *testing.T) {
 
 	mdevA100 := mdevs[0]
 
-	require.Equal(t, "A100-4C", mdevA100.MDEVType, "Wrong value for mdev_type")
+	require.Equal(t, "NVIDIA A100-4C", mdevA100.MDEVName, "Wrong value for mdev name")
+	require.Equal(t, "A100-4C", mdevA100.MDEVType, "Wrong value for mdev type")
 	require.Equal(t, "vfio_mdev", mdevA100.Driver, "Wrong driver detected for mdev device")
 	require.Equal(t, 200, mdevA100.IommuGroup, "Wrong value for iommu_group")
 
