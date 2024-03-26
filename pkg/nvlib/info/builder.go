@@ -16,8 +16,15 @@
 
 package info
 
+import (
+	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
+	"github.com/NVIDIA/go-nvlib/pkg/nvml"
+)
+
 type builder struct {
-	root string
+	root      string
+	nvmllib   nvml.Interface
+	devicelib device.Interface
 }
 
 // New creates a new instance of the 'info' Interface
@@ -29,11 +36,19 @@ func New(opts ...Option) Interface {
 	if b.root == "" {
 		b.root = "/"
 	}
+	if b.nvmllib == nil {
+		b.nvmllib = nvml.New()
+	}
+	if b.devicelib == nil {
+		b.devicelib = device.New(device.WithNvml(b.nvmllib))
+	}
 	return b.build()
 }
 
 func (b *builder) build() Interface {
 	return &infolib{
-		root: b.root,
+		root:      b.root,
+		nvmllib:   b.nvmllib,
+		devicelib: b.devicelib,
 	}
 }

@@ -23,9 +23,10 @@ type Interface interface {
 
 // Properties provides a set of functions to query capabilities of the system.
 //
-//go:generate moq -stub -out properties_mock.go . Properties
+//go:generate moq -rm -stub -out properties_mock.go . Properties
 type Properties interface {
 	HasDXCore() (bool, string)
 	HasNvml() (bool, string)
 	IsTegraSystem() (bool, string)
+	UsesNVGPUModule() (bool, string)
 }
