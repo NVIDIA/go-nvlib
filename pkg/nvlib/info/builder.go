@@ -1,5 +1,5 @@
 /**
-# Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+# Copyright 2024 NVIDIA CORPORATION
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,24 @@
 
 package info
 
-// Option defines a function for passing options to the New() call
-type Option func(*builder)
+type builder struct {
+	root string
+}
 
-// WithRoot provides a Option to set the root of the 'info' interface
-func WithRoot(root string) Option {
-	return func(i *builder) {
-		i.root = root
+// New creates a new instance of the 'info' Interface
+func New(opts ...Option) Interface {
+	b := &builder{}
+	for _, opt := range opts {
+		opt(b)
+	}
+	if b.root == "" {
+		b.root = "/"
+	}
+	return b.build()
+}
+
+func (b *builder) build() Interface {
+	return &infolib{
+		root: b.root,
 	}
 }

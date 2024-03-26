@@ -1,5 +1,5 @@
 /**
-# Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+# Copyright 2024 NVIDIA CORPORATION
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 
 package info
 
-// Option defines a function for passing options to the New() call
-type Option func(*builder)
+// Interface provides the API to the info package
+type Interface interface {
+	Properties
+}
 
-// WithRoot provides a Option to set the root of the 'info' interface
-func WithRoot(root string) Option {
-	return func(i *builder) {
-		i.root = root
-	}
+// Properties provides a set of functions to query capabilities of the system.
+//
+//go:generate moq -stub -out properties_mock.go . Properties
+type Properties interface {
+	HasDXCore() (bool, string)
+	HasNvml() (bool, string)
+	IsTegraSystem() (bool, string)
 }

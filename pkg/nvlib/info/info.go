@@ -25,13 +25,6 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/dl"
 )
 
-// Interface provides the API to the info package
-type Interface interface {
-	HasDXCore() (bool, string)
-	HasNvml() (bool, string)
-	IsTegraSystem() (bool, string)
-}
-
 type infolib struct {
 	root string
 }
