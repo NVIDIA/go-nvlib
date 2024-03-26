@@ -16,8 +16,28 @@
 
 package info
 
+import (
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
+
+	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
+)
+
 // Option defines a function for passing options to the New() call.
 type Option func(*options)
+
+// WithDeviceLib sets the device library for the library.
+func WithDeviceLib(devicelib device.Interface) Option {
+	return func(l *options) {
+		l.devicelib = devicelib
+	}
+}
+
+// WithNvmlLib sets the nvml library for the library.
+func WithNvmlLib(nvmllib nvml.Interface) Option {
+	return func(l *options) {
+		l.nvmllib = nvmllib
+	}
+}
 
 // WithRoot provides a Option to set the root of the 'info' interface.
 func WithRoot(r string) Option {

@@ -31,4 +31,5 @@ type PropertyExtractor interface {
 	HasTegraFiles() (bool, string)
 	// Deprecated: Use HasTegraFiles instead.
 	IsTegraSystem() (bool, string)
+	UsesOnlyNVGPUModule() (bool, string)
 }

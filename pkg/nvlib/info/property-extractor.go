@@ -20,10 +20,16 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
+
+	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
 )
 
 type propertyExtractor struct {
-	root root
+	root      root
+	nvmllib   nvml.Interface
+	devicelib device.Interface
 }
 
 var _ Interface = &propertyExtractor{}
@@ -81,4 +87,57 @@ func (i *propertyExtractor) HasTegraFiles() (bool, string) {
 	}
 
 	return false, fmt.Sprintf("%v has no 'tegra' prefix", tegraFamilyFile)
+}
+
+// UsesOnlyNVGPUModule checks whether the only the nvgpu module is used.
+// This kernel module is used on Tegra-based systems when using the iGPU.
+// Since some of these systems also support NVML, we use the device name
+// reported by NVML to determine whether the system is an iGPU system.
+//
+// Devices that use the nvgpu module have their device names as:
+//
+//	GPU 0: Orin (nvgpu) (UUID: 54d0709b-558d-5a59-9c65-0c5fc14a21a4)
+//
+// This function returns true if ALL devices use the nvgpu module.
+func (i *propertyExtractor) UsesOnlyNVGPUModule() (uses bool, reason string) {
+	// We ensure that this function never panics
+	defer func() {
+		if err := recover(); err != nil {
+			uses = false
+			reason = fmt.Sprintf("panic: %v", err)
+		}
+	}()
+
+	ret := i.nvmllib.Init()
+	if ret != nvml.SUCCESS {
+		return false, fmt.Sprintf("failed to initialize nvml: %v", ret)
+	}
+	defer func() {
+		_ = i.nvmllib.Shutdown()
+	}()
+
+	var names []string
+
+	err := i.devicelib.VisitDevices(func(i int, d device.Device) error {
+		name, ret := d.GetName()
+		if ret != nvml.SUCCESS {
+			return fmt.Errorf("device %v: %v", i, ret)
+		}
+		names = append(names, name)
+		return nil
+	})
+	if err != nil {
+		return false, fmt.Sprintf("failed to get device names: %v", err)
+	}
+
+	if len(names) == 0 {
+		return false, "no devices found"
+	}
+
+	for _, name := range names {
+		if !strings.Contains(name, "(nvgpu)") {
+			return false, fmt.Sprintf("device %q does not use nvgpu module", name)
+		}
+	}
+	return true, "all devices use nvgpu module"
 }
