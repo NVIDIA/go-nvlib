@@ -32,7 +32,7 @@ type propertyExtractor struct {
 	devicelib device.Interface
 }
 
-var _ Interface = &propertyExtractor{}
+var _ PropertyExtractor = &propertyExtractor{}
 
 // HasDXCore returns true if DXCore is detected on the system.
 func (i *propertyExtractor) HasDXCore() (bool, string) {

@@ -18,7 +18,13 @@ package info
 
 // Interface provides the API to the info package.
 type Interface interface {
+	PlatformResolver
 	PropertyExtractor
+}
+
+// PlatformResolver defines a function to resolve the current platform.
+type PlatformResolver interface {
+	ResolvePlatform() Platform
 }
 
 // PropertyExtractor provides a set of functions to query capabilities of the

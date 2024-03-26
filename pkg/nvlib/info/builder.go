@@ -22,17 +22,29 @@ import (
 	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
 )
 
+type infolib struct {
+	PropertyExtractor
+	PlatformResolver
+}
+
 type options struct {
+	logger    basicLogger
 	root      root
 	nvmllib   nvml.Interface
 	devicelib device.Interface
+
+	platform          Platform
+	propertyExtractor PropertyExtractor
 }
 
-// New creates a new instance of the 'info' Interface.
+// New creates a new instance of the 'info' interface.
 func New(opts ...Option) Interface {
 	o := &options{}
 	for _, opt := range opts {
 		opt(o)
+	}
+	if o.logger == nil {
+		o.logger = &nullLogger{}
 	}
 	if o.root == "" {
 		o.root = "/"
@@ -45,9 +57,22 @@ func New(opts ...Option) Interface {
 	if o.devicelib == nil {
 		o.devicelib = device.New(device.WithNvml(o.nvmllib))
 	}
-	return &propertyExtractor{
-		root:      o.root,
-		nvmllib:   o.nvmllib,
-		devicelib: o.devicelib,
+	if o.platform == "" {
+		o.platform = PlatformAuto
+	}
+	if o.propertyExtractor == nil {
+		o.propertyExtractor = &propertyExtractor{
+			root:      o.root,
+			nvmllib:   o.nvmllib,
+			devicelib: o.devicelib,
+		}
+	}
+	return &infolib{
+		PlatformResolver: &platformResolver{
+			logger:            o.logger,
+			platform:          o.platform,
+			propertyExtractor: o.propertyExtractor,
+		},
+		PropertyExtractor: o.propertyExtractor,
 	}
 }

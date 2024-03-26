@@ -27,15 +27,22 @@ type Option func(*options)
 
 // WithDeviceLib sets the device library for the library.
 func WithDeviceLib(devicelib device.Interface) Option {
-	return func(l *options) {
-		l.devicelib = devicelib
+	return func(i *options) {
+		i.devicelib = devicelib
+	}
+}
+
+// WithLogger sets the logger for the library.
+func WithLogger(logger basicLogger) Option {
+	return func(i *options) {
+		i.logger = logger
 	}
 }
 
 // WithNvmlLib sets the nvml library for the library.
 func WithNvmlLib(nvmllib nvml.Interface) Option {
-	return func(l *options) {
-		l.nvmllib = nvmllib
+	return func(i *options) {
+		i.nvmllib = nvmllib
 	}
 }
 
@@ -43,5 +50,21 @@ func WithNvmlLib(nvmllib nvml.Interface) Option {
 func WithRoot(r string) Option {
 	return func(i *options) {
 		i.root = root(r)
+	}
+}
+
+// WithPropertyExtractor provides an Option to set the PropertyExtractor
+// interface implementation.
+// This is predominantly used for testing.
+func WithPropertyExtractor(propertyExtractor PropertyExtractor) Option {
+	return func(i *options) {
+		i.propertyExtractor = propertyExtractor
+	}
+}
+
+// WithPlatform provides an option to set the platform explicitly.
+func WithPlatform(platform Platform) Option {
+	return func(i *options) {
+		i.platform = platform
 	}
 }
