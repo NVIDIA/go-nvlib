@@ -27,6 +27,7 @@ type builder struct {
 	nvmllib   nvml.Interface
 	devicelib device.Interface
 
+	preHook    Resolver
 	properties Properties
 }
 
@@ -47,6 +48,9 @@ func New(opts ...Option) Interface {
 	}
 	if b.devicelib == nil {
 		b.devicelib = device.New(device.WithNvml(b.nvmllib))
+	}
+	if b.preHook == nil {
+		b.preHook = noop{}
 	}
 	if b.properties == nil {
 		b.properties = &info{
@@ -79,6 +83,7 @@ func (b *builder) getResolvers() Resolver {
 
 	return firstOf([]Resolver{
 		auto,
+		b.preHook,
 		systemMode,
 	})
 }

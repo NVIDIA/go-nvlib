@@ -52,6 +52,13 @@ func WithRoot(root string) Option {
 	}
 }
 
+// WithPreHookResolver provides an Option to set resolvers to use before others.
+func WithPreHookResolver(preHook Resolver) Option {
+	return func(i *builder) {
+		i.preHook = preHook
+	}
+}
+
 // WithProperties provides an Option to set the Properties interface implementation.
 // This is predominantly used for testing.
 func WithProperties(properties Properties) Option {
