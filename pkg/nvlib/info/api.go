@@ -1,5 +1,5 @@
 /**
-# Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+# Copyright 2024 NVIDIA CORPORATION
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,19 @@
 
 package info
 
-// Option defines a function for passing options to the New() call.
-type Option func(*options)
+// Interface provides the API to the info package.
+type Interface interface {
+	PropertyExtractor
+}
 
-// WithRoot provides a Option to set the root of the 'info' interface.
-func WithRoot(r string) Option {
-	return func(i *options) {
-		i.root = root(r)
-	}
+// PropertyExtractor provides a set of functions to query capabilities of the
+// system.
+//
+//go:generate moq -rm -out property-extractor_mock.go . PropertyExtractor
+type PropertyExtractor interface {
+	HasDXCore() (bool, string)
+	HasNvml() (bool, string)
+	HasTegraFiles() (bool, string)
+	// Deprecated: Use HasTegraFiles instead.
+	IsTegraSystem() (bool, string)
 }

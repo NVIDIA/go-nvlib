@@ -19,31 +19,21 @@ package info
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
-
-	"github.com/NVIDIA/go-nvml/pkg/dl"
 )
 
-// Interface provides the API to the info package.
-type Interface interface {
-	HasDXCore() (bool, string)
-	HasNvml() (bool, string)
-	IsTegraSystem() (bool, string)
+type propertyExtractor struct {
+	root root
 }
 
-type infolib struct {
-	root string
-}
-
-var _ Interface = &infolib{}
+var _ Interface = &propertyExtractor{}
 
 // HasDXCore returns true if DXCore is detected on the system.
-func (i *infolib) HasDXCore() (bool, string) {
+func (i *propertyExtractor) HasDXCore() (bool, string) {
 	const (
 		libraryName = "libdxcore.so"
 	)
-	if err := assertHasLibrary(libraryName); err != nil {
+	if err := i.root.assertHasLibrary(libraryName); err != nil {
 		return false, fmt.Sprintf("could not load DXCore library: %v", err)
 	}
 
@@ -51,11 +41,11 @@ func (i *infolib) HasDXCore() (bool, string) {
 }
 
 // HasNvml returns true if NVML is detected on the system.
-func (i *infolib) HasNvml() (bool, string) {
+func (i *propertyExtractor) HasNvml() (bool, string) {
 	const (
 		libraryName = "libnvidia-ml.so.1"
 	)
-	if err := assertHasLibrary(libraryName); err != nil {
+	if err := i.root.assertHasLibrary(libraryName); err != nil {
 		return false, fmt.Sprintf("could not load NVML library: %v", err)
 	}
 
@@ -63,9 +53,15 @@ func (i *infolib) HasNvml() (bool, string) {
 }
 
 // IsTegraSystem returns true if the system is detected as a Tegra-based system.
-func (i *infolib) IsTegraSystem() (bool, string) {
-	tegraReleaseFile := filepath.Join(i.root, "/etc/nv_tegra_release")
-	tegraFamilyFile := filepath.Join(i.root, "/sys/devices/soc0/family")
+// Deprecated: Use HasTegraFiles instead.
+func (i *propertyExtractor) IsTegraSystem() (bool, string) {
+	return i.HasTegraFiles()
+}
+
+// HasTegraFiles returns true if tegra-based files are detected on the system.
+func (i *propertyExtractor) HasTegraFiles() (bool, string) {
+	tegraReleaseFile := i.root.join("/etc/nv_tegra_release")
+	tegraFamilyFile := i.root.join("/sys/devices/soc0/family")
 
 	if info, err := os.Stat(tegraReleaseFile); err == nil && !info.IsDir() {
 		return true, fmt.Sprintf("%v found", tegraReleaseFile)
@@ -85,18 +81,4 @@ func (i *infolib) IsTegraSystem() (bool, string) {
 	}
 
 	return false, fmt.Sprintf("%v has no 'tegra' prefix", tegraFamilyFile)
-}
-
-// assertHasLibrary returns an error if the specified library cannot be loaded.
-func assertHasLibrary(libraryName string) error {
-	const (
-		libraryLoadFlags = dl.RTLD_LAZY
-	)
-	lib := dl.New(libraryName, libraryLoadFlags)
-	if err := lib.Open(); err != nil {
-		return err
-	}
-	defer lib.Close()
-
-	return nil
 }
