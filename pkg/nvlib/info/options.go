@@ -31,6 +31,13 @@ func WithDeviceLib(devicelib device.Interface) Option {
 	}
 }
 
+// WithLogger sets the logger for the library.
+func WithLogger(logger basicLogger) Option {
+	return func(i *builder) {
+		i.logger = logger
+	}
+}
+
 // WithNvmlLib sets the nvml library for the library
 func WithNvmlLib(nvmllib nvml.Interface) Option {
 	return func(l *builder) {
@@ -42,5 +49,13 @@ func WithNvmlLib(nvmllib nvml.Interface) Option {
 func WithRoot(root string) Option {
 	return func(i *builder) {
 		i.root = root
+	}
+}
+
+// WithProperties provides an Option to set the Properties interface implementation.
+// This is predominantly used for testing.
+func WithProperties(properties Properties) Option {
+	return func(i *builder) {
+		i.properties = properties
 	}
 }

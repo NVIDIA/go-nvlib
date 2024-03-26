@@ -22,16 +22,22 @@ import (
 )
 
 type builder struct {
+	logger    basicLogger
 	root      string
 	nvmllib   nvml.Interface
 	devicelib device.Interface
+
+	properties Properties
 }
 
-// New creates a new instance of the 'info' Interface
+// New creates a new instance of the 'info' interface
 func New(opts ...Option) Interface {
 	b := &builder{}
 	for _, opt := range opts {
 		opt(b)
+	}
+	if b.logger == nil {
+		b.logger = &nullLogger{}
 	}
 	if b.root == "" {
 		b.root = "/"
@@ -42,13 +48,37 @@ func New(opts ...Option) Interface {
 	if b.devicelib == nil {
 		b.devicelib = device.New(device.WithNvml(b.nvmllib))
 	}
+	if b.properties == nil {
+		b.properties = &info{
+			root:      b.root,
+			nvmllib:   b.nvmllib,
+			devicelib: b.devicelib,
+		}
+	}
 	return b.build()
 }
 
 func (b *builder) build() Interface {
 	return &infolib{
-		root:      b.root,
-		nvmllib:   b.nvmllib,
-		devicelib: b.devicelib,
+		logger:     b.logger,
+		Resolver:   b.getResolvers(),
+		Properties: b.properties,
 	}
+}
+
+func (b *builder) getResolvers() Resolver {
+	auto := &notEqualsResolver{
+		logger: b.logger,
+		mode:   "auto",
+	}
+
+	systemMode := &systemMode{
+		logger:     b.logger,
+		Properties: b.properties,
+	}
+
+	return firstOf([]Resolver{
+		auto,
+		systemMode,
+	})
 }

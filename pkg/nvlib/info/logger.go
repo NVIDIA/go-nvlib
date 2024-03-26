@@ -16,23 +16,13 @@
 
 package info
 
-// Interface provides the API to the info package
-type Interface interface {
-	Resolver
-	Properties
+type basicLogger interface {
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
 }
 
-// Resolver defines a function to resolve a mode.
-type Resolver interface {
-	Resolve(string) string
-}
+type nullLogger struct{}
 
-// Properties provides a set of functions to query capabilities of the system.
-//
-//go:generate moq -rm -stub -out properties_mock.go . Properties
-type Properties interface {
-	HasDXCore() (bool, string)
-	HasNvml() (bool, string)
-	IsTegraSystem() (bool, string)
-	UsesNVGPUModule() (bool, string)
-}
+func (n *nullLogger) Debugf(string, ...interface{}) {}
+
+func (n *nullLogger) Infof(string, ...interface{}) {}

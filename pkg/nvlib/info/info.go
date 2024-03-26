@@ -28,15 +28,22 @@ import (
 )
 
 type infolib struct {
+	logger basicLogger
+	Properties
+	Resolver
+}
+
+type info struct {
 	root      string
 	nvmllib   nvml.Interface
 	devicelib device.Interface
 }
 
+var _ Properties = &info{}
 var _ Interface = &infolib{}
 
 // HasDXCore returns true if DXCore is detected on the system.
-func (i *infolib) HasDXCore() (bool, string) {
+func (i *info) HasDXCore() (bool, string) {
 	const (
 		libraryName = "libdxcore.so"
 	)
@@ -48,7 +55,7 @@ func (i *infolib) HasDXCore() (bool, string) {
 }
 
 // HasNvml returns true if NVML is detected on the system
-func (i *infolib) HasNvml() (bool, string) {
+func (i *info) HasNvml() (bool, string) {
 	const (
 		libraryName = "libnvidia-ml.so.1"
 	)
@@ -60,7 +67,7 @@ func (i *infolib) HasNvml() (bool, string) {
 }
 
 // IsTegraSystem returns true if the system is detected as a Tegra-based system
-func (i *infolib) IsTegraSystem() (bool, string) {
+func (i *info) IsTegraSystem() (bool, string) {
 	tegraReleaseFile := filepath.Join(i.root, "/etc/nv_tegra_release")
 	tegraFamilyFile := filepath.Join(i.root, "/sys/devices/soc0/family")
 
@@ -94,7 +101,7 @@ func (i *infolib) IsTegraSystem() (bool, string) {
 //	GPU 0: Orin (nvgpu) (UUID: 54d0709b-558d-5a59-9c65-0c5fc14a21a4)
 //
 // This function returns true if ALL devices use the nvgpu module.
-func (i *infolib) UsesNVGPUModule() (uses bool, reason string) {
+func (i *info) UsesNVGPUModule() (uses bool, reason string) {
 	// We ensure that this function never panics
 	defer func() {
 		if err := recover(); err != nil {
