@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MODULE := github.com/NVIDIA/go-nvlib
+include versions.mk
 
 DOCKER ?= docker
 
-GOLANG_VERSION := 1.21.1
-
-ifeq ($(IMAGE),)
-REGISTRY ?= nvidia
-IMAGE=$(REGISTRY)/go-nvlib
-endif
-IMAGE_TAG ?= $(GOLANG_VERSION)
-BUILDIMAGE ?= $(IMAGE):$(IMAGE_TAG)-devel
 PCI_IDS_URL ?= https://pci-ids.ucw.cz/v2.2/pci.ids
 
 TARGETS := binary build all check fmt assert-fmt generate lint vet test coverage
@@ -37,6 +29,9 @@ build:
 
 all: check build binary
 check: assert-fmt lint vet
+
+check-vendor: vendor
+	git diff --quiet HEAD -- go.mod go.sum vendor
 
 # Apply go fmt to the codebase
 fmt:
@@ -76,32 +71,26 @@ coverage: test
 update-pcidb:
 	wget $(PCI_IDS_URL) -O $(CURDIR)/pkg/pciids/default_pci.ids
 
-# Generate an image for containerized builds
-# Note: This image is local only
-.PHONY: .build-image .pull-build-image .push-build-image
-.build-image: docker/Dockerfile.devel
-	if [ "$(SKIP_IMAGE_BUILD)" = "" ]; then \
-		$(DOCKER) build \
-			--progress=plain \
-			--build-arg GOLANG_VERSION="$(GOLANG_VERSION)" \
-			--tag $(BUILDIMAGE) \
-			-f $(^) \
-			docker; \
-	fi
+build-image: $(DOCKERFILE_DEVEL)
+	$(DOCKER) build \
+		--progress=plain \
+		--build-arg GOLANG_VERSION="$(GOLANG_VERSION)" \
+		--build-arg CLIENT_GEN_VERSION="$(CLIENT_GEN_VERSION)" \
+		--build-arg CONTROLLER_GEN_VERSION="$(CONTROLLER_GEN_VERSION)" \
+		--build-arg GOLANGCI_LINT_VERSION="$(GOLANGCI_LINT_VERSION)" \
+		--build-arg MOQ_VERSION="$(MOQ_VERSION)" \
+		--tag $(BUILDIMAGE) \
+		-f $(DOCKERFILE_DEVEL) \
+		.
 
-.pull-build-image:
-	$(DOCKER) pull $(BUILDIMAGE)
-
-.push-build-image:
-	$(DOCKER) push $(BUILDIMAGE)
-
-$(DOCKER_TARGETS): docker-%: .build-image
-	@echo "Running 'make $(*)' in docker container $(BUILDIMAGE)"
+$(DOCKER_TARGETS): docker-%:
+	@echo "Running 'make $(*)' in container image $(BUILDIMAGE)"
 	$(DOCKER) run \
 		--rm \
-		-e GOCACHE=/tmp/.cache \
-		-v $(PWD):$(PWD) \
-		-w $(PWD) \
+		-e GOCACHE=/tmp/.cache/go \
+		-e GOMODCACHE=/tmp/.cache/gomod \
+		-v $(PWD):/work \
+		-w /work \
 		--user $$(id -u):$$(id -g) \
 		$(BUILDIMAGE) \
 			make $(*)

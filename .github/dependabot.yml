@@ -10,13 +10,22 @@ updates:
       interval: "weekly"
       day: "sunday"
     labels:
-      - area/dependency
-    ignore:
-    - dependency-name: k8s.io/*
-    labels:
     - dependencies
+    groups:
+      k8sio:
+        patterns:
+        - k8s.io/*
+        exclude-patterns:
+        - k8s.io/klog/*
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "github-actions"
+    target-branch: gh-pages
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
