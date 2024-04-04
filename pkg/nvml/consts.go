@@ -20,12 +20,12 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-// General untyped constants
+// General untyped constants.
 const (
 	NVLINK_MAX_LINKS = nvml.NVLINK_MAX_LINKS
 )
 
-// Return constants
+// Return constants.
 const (
 	SUCCESS                       = Return(nvml.SUCCESS)
 	ERROR_UNINITIALIZED           = Return(nvml.ERROR_UNINITIALIZED)
@@ -54,7 +54,7 @@ const (
 	ERROR_UNKNOWN                 = Return(nvml.ERROR_UNKNOWN)
 )
 
-// Device architecture constants
+// Device architecture constants.
 const (
 	DEVICE_ARCH_KEPLER  = nvml.DEVICE_ARCH_KEPLER
 	DEVICE_ARCH_MAXWELL = nvml.DEVICE_ARCH_MAXWELL
@@ -67,7 +67,7 @@ const (
 	DEVICE_ARCH_UNKNOWN = nvml.DEVICE_ARCH_UNKNOWN
 )
 
-// Device brand constants
+// Device brand constants.
 const (
 	BRAND_UNKNOWN             = BrandType(nvml.BRAND_UNKNOWN)
 	BRAND_QUADRO              = BrandType(nvml.BRAND_QUADRO)
@@ -90,13 +90,13 @@ const (
 	BRAND_COUNT               = BrandType(nvml.BRAND_COUNT)
 )
 
-// MIG Mode constants
+// MIG Mode constants.
 const (
 	DEVICE_MIG_ENABLE  = nvml.DEVICE_MIG_ENABLE
 	DEVICE_MIG_DISABLE = nvml.DEVICE_MIG_DISABLE
 )
 
-// GPU Instance Profiles
+// GPU Instance Profiles.
 const (
 	GPU_INSTANCE_PROFILE_1_SLICE      = nvml.GPU_INSTANCE_PROFILE_1_SLICE
 	GPU_INSTANCE_PROFILE_2_SLICE      = nvml.GPU_INSTANCE_PROFILE_2_SLICE
@@ -111,7 +111,7 @@ const (
 	GPU_INSTANCE_PROFILE_COUNT        = nvml.GPU_INSTANCE_PROFILE_COUNT
 )
 
-// Compute Instance Profiles
+// Compute Instance Profiles.
 const (
 	COMPUTE_INSTANCE_PROFILE_1_SLICE      = nvml.COMPUTE_INSTANCE_PROFILE_1_SLICE
 	COMPUTE_INSTANCE_PROFILE_2_SLICE      = nvml.COMPUTE_INSTANCE_PROFILE_2_SLICE
@@ -124,20 +124,20 @@ const (
 	COMPUTE_INSTANCE_PROFILE_COUNT        = nvml.COMPUTE_INSTANCE_PROFILE_COUNT
 )
 
-// Compute Instance Engine Profiles
+// Compute Instance Engine Profiles.
 const (
 	COMPUTE_INSTANCE_ENGINE_PROFILE_SHARED = nvml.COMPUTE_INSTANCE_ENGINE_PROFILE_SHARED
 	COMPUTE_INSTANCE_ENGINE_PROFILE_COUNT  = nvml.COMPUTE_INSTANCE_ENGINE_PROFILE_COUNT
 )
 
-// Event Types
+// Event Types.
 const (
 	EventTypeXidCriticalError  = nvml.EventTypeXidCriticalError
 	EventTypeSingleBitEccError = nvml.EventTypeSingleBitEccError
 	EventTypeDoubleBitEccError = nvml.EventTypeDoubleBitEccError
 )
 
-// GPU Topology enumeration
+// GPU Topology enumeration.
 const (
 	TOPOLOGY_INTERNAL   = GpuTopologyLevel(nvml.TOPOLOGY_INTERNAL)
 	TOPOLOGY_SINGLE     = GpuTopologyLevel(nvml.TOPOLOGY_SINGLE)
@@ -147,13 +147,13 @@ const (
 	TOPOLOGY_SYSTEM     = GpuTopologyLevel(nvml.TOPOLOGY_SYSTEM)
 )
 
-// Generic enable/disable constants
+// Generic enable/disable constants.
 const (
 	FEATURE_DISABLED = EnableState(nvml.FEATURE_DISABLED)
 	FEATURE_ENABLED  = EnableState(nvml.FEATURE_ENABLED)
 )
 
-// Compute mode constants
+// Compute mode constants.
 const (
 	COMPUTEMODE_DEFAULT           = ComputeMode(nvml.COMPUTEMODE_DEFAULT)
 	COMPUTEMODE_EXCLUSIVE_THREAD  = ComputeMode(nvml.COMPUTEMODE_EXCLUSIVE_THREAD)

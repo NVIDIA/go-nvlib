@@ -1,0 +1,23 @@
+# please keep this alphabetized
+linters:
+  enable:
+    - asciicheck
+    - contextcheck
+    - godot
+    - gofmt
+    - goimports
+    - misspell
+# TODO: re-enable once we have addressed the warnings
+  disable:
+    - unused
+    - gocritic
+    - stylecheck
+    - forcetypeassert
+
+run:
+  tests: true
+  timeout: 10m
+
+linters-settings:
+  goimports:
+    local-prefixes: "github.com/NVIDIA/go-nvlib"

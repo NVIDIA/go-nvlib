@@ -4,8 +4,9 @@
 package nvml
 
 import (
-	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"sync"
+
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
 // Ensure, that DeviceMock does implement Device.

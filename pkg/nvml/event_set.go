@@ -20,7 +20,7 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-// Wait watches for an event with the specified timeout
+// Wait watches for an event with the specified timeout.
 func (e EventSet) Wait(Timeoutms uint32) (EventData, Return) {
 	d, r := nvml.EventSet(e).Wait(Timeoutms)
 	eventData := EventData{
@@ -33,7 +33,7 @@ func (e EventSet) Wait(Timeoutms uint32) (EventData, Return) {
 	return eventData, Return(r)
 }
 
-// Free deletes the event set
+// Free deletes the event set.
 func (e EventSet) Free() Return {
 	return Return(nvml.EventSet(e).Free())
 }

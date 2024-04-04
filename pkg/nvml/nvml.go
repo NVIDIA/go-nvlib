@@ -29,7 +29,7 @@ type nvmlLib struct {
 
 var _ Interface = (*nvmlLib)(nil)
 
-// New creates a new instance of the NVML Interface
+// New creates a new instance of the NVML Interface.
 func New(opts ...Option) Interface {
 	o := &options{}
 	for _, opt := range opts {
@@ -40,7 +40,7 @@ func New(opts ...Option) Interface {
 	if o.libraryPath != "" {
 		nvmlOptions = append(nvmlOptions, nvml.WithLibraryPath(o.libraryPath))
 	}
-	nvml.SetLibraryOptions(nvmlOptions...)
+	_ = nvml.SetLibraryOptions(nvmlOptions...)
 
 	return &nvmlLib{}
 }
@@ -51,7 +51,7 @@ func (n *nvmlLib) Lookup(name string) error {
 	return nvml.GetLibrary().Lookup(name)
 }
 
-// Init initializes an NVML Interface
+// Init initializes an NVML Interface.
 func (n *nvmlLib) Init() Return {
 	ret := nvml.Init()
 	if ret != nvml.SUCCESS {
@@ -68,7 +68,7 @@ func (n *nvmlLib) Init() Return {
 	return SUCCESS
 }
 
-// Shutdown shuts down an NVML Interface
+// Shutdown shuts down an NVML Interface.
 func (n *nvmlLib) Shutdown() Return {
 	ret := nvml.Shutdown()
 	if ret != nvml.SUCCESS {
@@ -85,42 +85,42 @@ func (n *nvmlLib) Shutdown() Return {
 	return SUCCESS
 }
 
-// DeviceGetCount returns the total number of GPU Devices
+// DeviceGetCount returns the total number of GPU Devices.
 func (n *nvmlLib) DeviceGetCount() (int, Return) {
 	c, r := nvml.DeviceGetCount()
 	return c, Return(r)
 }
 
-// DeviceGetHandleByIndex returns a Device handle given its index
+// DeviceGetHandleByIndex returns a Device handle given its index.
 func (n *nvmlLib) DeviceGetHandleByIndex(index int) (Device, Return) {
 	d, r := nvml.DeviceGetHandleByIndex(index)
 	return nvmlDevice(d), Return(r)
 }
 
-// DeviceGetHandleByUUID returns a Device handle given its UUID
+// DeviceGetHandleByUUID returns a Device handle given its UUID.
 func (n *nvmlLib) DeviceGetHandleByUUID(uuid string) (Device, Return) {
 	d, r := nvml.DeviceGetHandleByUUID(uuid)
 	return nvmlDevice(d), Return(r)
 }
 
-// SystemGetDriverVersion returns the version of the installed NVIDIA driver
+// SystemGetDriverVersion returns the version of the installed NVIDIA driver.
 func (n *nvmlLib) SystemGetDriverVersion() (string, Return) {
 	v, r := nvml.SystemGetDriverVersion()
 	return v, Return(r)
 }
 
-// SystemGetCudaDriverVersion returns the version of CUDA associated with the NVIDIA driver
+// SystemGetCudaDriverVersion returns the version of CUDA associated with the NVIDIA driver.
 func (n *nvmlLib) SystemGetCudaDriverVersion() (int, Return) {
 	v, r := nvml.SystemGetCudaDriverVersion()
 	return v, Return(r)
 }
 
-// ErrorString returns the error string associated with a given return value
+// ErrorString returns the error string associated with a given return value.
 func (n *nvmlLib) ErrorString(ret Return) string {
 	return nvml.ErrorString(nvml.Return(ret))
 }
 
-// EventSetCreate creates an event set
+// EventSetCreate creates an event set.
 func (n *nvmlLib) EventSetCreate() (EventSet, Return) {
 	e, r := nvml.EventSetCreate()
 	return EventSet(e), Return(r)

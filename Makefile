@@ -20,7 +20,7 @@ PCI_IDS_URL ?= https://pci-ids.ucw.cz/v2.2/pci.ids
 
 TARGETS := binary build all check fmt assert-fmt generate lint vet test coverage
 DOCKER_TARGETS := $(patsubst %,docker-%, $(TARGETS))
-.PHONY: $(TARGETS) $(DOCKER_TARGETS)
+.PHONY: $(TARGETS) $(DOCKER_TARGETS) vendor check-vendor
 
 GOOS := linux
 
@@ -29,6 +29,11 @@ build:
 
 all: check build binary
 check: assert-fmt lint vet
+
+vendor:
+	go mod tidy
+	go mod vendor
+	go mod verify
 
 check-vendor: vendor
 	git diff --quiet HEAD -- go.mod go.sum vendor
@@ -56,6 +61,14 @@ generate:
 lint:
 	# We use `go list -f '{{.Dir}}' $(MODULE)/...` to skip the `vendor` folder.
 	go list -f '{{.Dir}}' $(MODULE)/... | grep -v pkg/nvml | xargs golint -set_exit_status
+
+## goimports: Apply goimports -local to the codebase
+goimports:
+	find . -name \*.go \
+			-not -name "zz_generated.deepcopy.go" \
+			-not -path "./vendor/*" \
+			-not -path "./pkg/nvidia.com/resource/clientset/versioned/*" \
+		-exec goimports -local $(MODULE) -w {} \;
 
 vet:
 	go vet $(MODULE)/...
@@ -89,6 +102,7 @@ $(DOCKER_TARGETS): docker-%:
 		--rm \
 		-e GOCACHE=/tmp/.cache/go \
 		-e GOMODCACHE=/tmp/.cache/gomod \
+		-e GOLANGCI_LINT_CACHE=/tmp/.cache/golangci-lint \
 		-v $(PWD):/work \
 		-w /work \
 		--user $$(id -u):$$(id -g) \

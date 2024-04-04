@@ -22,7 +22,7 @@ import (
 
 // Interface defines the functions implemented by an NVML library
 //
-//go:generate moq -out nvml_mock.go . Interface
+//go:generate moq -out nvml_mock.go . Interface.
 type Interface interface {
 	DeviceGetCount() (int, Return)
 	DeviceGetHandleByIndex(Index int) (Device, Return)
@@ -93,7 +93,7 @@ type ComputeInstance interface {
 	GetInfo() (ComputeInstanceInfo, Return)
 }
 
-// GpuInstanceInfo holds info about a GPU Instance
+// GpuInstanceInfo holds info about a GPU Instance.
 type GpuInstanceInfo struct {
 	Device    Device
 	Id        uint32
@@ -101,7 +101,7 @@ type GpuInstanceInfo struct {
 	Placement GpuInstancePlacement
 }
 
-// ComputeInstanceInfo holds info about a Compute Instance
+// ComputeInstanceInfo holds info about a Compute Instance.
 type ComputeInstanceInfo struct {
 	Device      Device
 	GpuInstance GpuInstance
@@ -110,7 +110,7 @@ type ComputeInstanceInfo struct {
 	Placement   ComputeInstancePlacement
 }
 
-// EventData defines NVML event Data
+// EventData defines NVML event Data.
 type EventData struct {
 	Device            Device
 	EventType         uint64
@@ -119,44 +119,44 @@ type EventData struct {
 	ComputeInstanceId uint32
 }
 
-// EventSet defines NVML event Data
+// EventSet defines NVML event Data.
 type EventSet nvml.EventSet
 
-// Return defines an NVML return type
+// Return defines an NVML return type.
 type Return nvml.Return
 
-// Memory holds info about GPU device memory
+// Memory holds info about GPU device memory.
 type Memory nvml.Memory
 
-// PciInfo holds info about the PCI connections of a GPU dvice
+// PciInfo holds info about the PCI connections of a GPU dvice.
 type PciInfo nvml.PciInfo
 
-// GpuInstanceProfileInfo holds info about a GPU Instance Profile
+// GpuInstanceProfileInfo holds info about a GPU Instance Profile.
 type GpuInstanceProfileInfo nvml.GpuInstanceProfileInfo
 
-// GpuInstancePlacement holds placement info about a GPU Instance
+// GpuInstancePlacement holds placement info about a GPU Instance.
 type GpuInstancePlacement nvml.GpuInstancePlacement
 
-// ComputeInstanceProfileInfo holds info about a Compute Instance Profile
+// ComputeInstanceProfileInfo holds info about a Compute Instance Profile.
 type ComputeInstanceProfileInfo nvml.ComputeInstanceProfileInfo
 
-// ComputeInstancePlacement holds placement info about a Compute Instance
+// ComputeInstancePlacement holds placement info about a Compute Instance.
 type ComputeInstancePlacement nvml.ComputeInstancePlacement
 
-// DeviceAttributes stores information about MIG devices
+// DeviceAttributes stores information about MIG devices.
 type DeviceAttributes nvml.DeviceAttributes
 
-// DeviceArchitecture represents the hardware architecture of a GPU device
+// DeviceArchitecture represents the hardware architecture of a GPU device.
 type DeviceArchitecture nvml.DeviceArchitecture
 
-// BrandType represents the brand of a GPU device
+// BrandType represents the brand of a GPU device.
 type BrandType nvml.BrandType
 
-// GpuTopologyLevel represents level relationships within a system between two GPUs
+// GpuTopologyLevel represents level relationships within a system between two GPUs.
 type GpuTopologyLevel nvml.GpuTopologyLevel
 
-// EnableState represents a generic enable/disable enum
+// EnableState represents a generic enable/disable enum.
 type EnableState nvml.EnableState
 
-// ComputeMode represents the compute mode for a device
+// ComputeMode represents the compute mode for a device.
 type ComputeMode nvml.ComputeMode
