@@ -24,7 +24,7 @@ type nvmlComputeInstance nvml.ComputeInstance
 
 var _ ComputeInstance = (*nvmlComputeInstance)(nil)
 
-// GetInfo() returns info about a Compute Instance
+// GetInfo() returns info about a Compute Instance.
 func (ci nvmlComputeInstance) GetInfo() (ComputeInstanceInfo, Return) {
 	i, r := nvml.ComputeInstance(ci).GetInfo()
 	info := ComputeInstanceInfo{
@@ -37,7 +37,7 @@ func (ci nvmlComputeInstance) GetInfo() (ComputeInstanceInfo, Return) {
 	return info, Return(r)
 }
 
-// Destroy() destroys a Compute Instance
+// Destroy() destroys a Compute Instance.
 func (ci nvmlComputeInstance) Destroy() Return {
 	r := nvml.ComputeInstance(ci).Destroy()
 	return Return(r)

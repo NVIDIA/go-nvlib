@@ -24,7 +24,7 @@ type nvmlGpuInstance nvml.GpuInstance
 
 var _ GpuInstance = (*nvmlGpuInstance)(nil)
 
-// GetInfo returns info about a GPU Intsance
+// GetInfo returns info about a GPU Intsance.
 func (gi nvmlGpuInstance) GetInfo() (GpuInstanceInfo, Return) {
 	i, r := nvml.GpuInstance(gi).GetInfo()
 	info := GpuInstanceInfo{
@@ -42,19 +42,19 @@ func (gi nvmlGpuInstance) GetComputeInstanceById(id int) (ComputeInstance, Retur
 	return nvmlComputeInstance(ci), Return(r)
 }
 
-// GetComputeInstanceProfileInfo returns info about a given Compute Instance profile
+// GetComputeInstanceProfileInfo returns info about a given Compute Instance profile.
 func (gi nvmlGpuInstance) GetComputeInstanceProfileInfo(profile int, engProfile int) (ComputeInstanceProfileInfo, Return) {
 	p, r := nvml.GpuInstance(gi).GetComputeInstanceProfileInfo(profile, engProfile)
 	return ComputeInstanceProfileInfo(p), Return(r)
 }
 
-// CreateComputeInstance creates a Compute Instance within the GPU Instance
+// CreateComputeInstance creates a Compute Instance within the GPU Instance.
 func (gi nvmlGpuInstance) CreateComputeInstance(info *ComputeInstanceProfileInfo) (ComputeInstance, Return) {
 	ci, r := nvml.GpuInstance(gi).CreateComputeInstance((*nvml.ComputeInstanceProfileInfo)(info))
 	return nvmlComputeInstance(ci), Return(r)
 }
 
-// GetComputeInstances returns the set of Compute Instances associated with a GPU Instance
+// GetComputeInstances returns the set of Compute Instances associated with a GPU Instance.
 func (gi nvmlGpuInstance) GetComputeInstances(info *ComputeInstanceProfileInfo) ([]ComputeInstance, Return) {
 	nvmlCis, r := nvml.GpuInstance(gi).GetComputeInstances((*nvml.ComputeInstanceProfileInfo)(info))
 	var cis []ComputeInstance
@@ -64,7 +64,7 @@ func (gi nvmlGpuInstance) GetComputeInstances(info *ComputeInstanceProfileInfo) 
 	return cis, Return(r)
 }
 
-// Destroy destroys a GPU Instance
+// Destroy destroys a GPU Instance.
 func (gi nvmlGpuInstance) Destroy() Return {
 	r := nvml.GpuInstance(gi).Destroy()
 	return Return(r)

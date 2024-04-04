@@ -27,73 +27,73 @@ func (d nvmlDevice) nvmlDeviceHandle() *nvml.Device {
 	return (*nvml.Device)(&d)
 }
 
-// GetIndex returns the index of a Device
+// GetIndex returns the index of a Device.
 func (d nvmlDevice) GetIndex() (int, Return) {
 	i, r := nvml.Device(d).GetIndex()
 	return i, Return(r)
 }
 
-// GetPciInfo returns the PCI info of a Device
+// GetPciInfo returns the PCI info of a Device.
 func (d nvmlDevice) GetPciInfo() (PciInfo, Return) {
 	p, r := nvml.Device(d).GetPciInfo()
 	return PciInfo(p), Return(r)
 }
 
-// GetMemoryInfo returns the memory info of a Device
+// GetMemoryInfo returns the memory info of a Device.
 func (d nvmlDevice) GetMemoryInfo() (Memory, Return) {
 	p, r := nvml.Device(d).GetMemoryInfo()
 	return Memory(p), Return(r)
 }
 
-// GetUUID returns the UUID of a Device
+// GetUUID returns the UUID of a Device.
 func (d nvmlDevice) GetUUID() (string, Return) {
 	u, r := nvml.Device(d).GetUUID()
 	return u, Return(r)
 }
 
-// GetMinorNumber returns the minor number of a Device
+// GetMinorNumber returns the minor number of a Device.
 func (d nvmlDevice) GetMinorNumber() (int, Return) {
 	m, r := nvml.Device(d).GetMinorNumber()
 	return m, Return(r)
 }
 
-// IsMigDeviceHandle returns whether a Device is a MIG device or not
+// IsMigDeviceHandle returns whether a Device is a MIG device or not.
 func (d nvmlDevice) IsMigDeviceHandle() (bool, Return) {
 	b, r := nvml.Device(d).IsMigDeviceHandle()
 	return b, Return(r)
 }
 
-// GetDeviceHandleFromMigDeviceHandle returns the parent Device of a MIG device
+// GetDeviceHandleFromMigDeviceHandle returns the parent Device of a MIG device.
 func (d nvmlDevice) GetDeviceHandleFromMigDeviceHandle() (Device, Return) {
 	p, r := nvml.Device(d).GetDeviceHandleFromMigDeviceHandle()
 	return nvmlDevice(p), Return(r)
 }
 
-// SetMigMode sets the MIG mode of a Device
+// SetMigMode sets the MIG mode of a Device.
 func (d nvmlDevice) SetMigMode(mode int) (Return, Return) {
 	r1, r2 := nvml.Device(d).SetMigMode(mode)
 	return Return(r1), Return(r2)
 }
 
-// GetMigMode returns the MIG mode of a Device
+// GetMigMode returns the MIG mode of a Device.
 func (d nvmlDevice) GetMigMode() (int, int, Return) {
 	s1, s2, r := nvml.Device(d).GetMigMode()
 	return s1, s2, Return(r)
 }
 
-// GetGpuInstanceById returns the GPU Instance associated with a particular ID
+// GetGpuInstanceById returns the GPU Instance associated with a particular ID.
 func (d nvmlDevice) GetGpuInstanceById(id int) (GpuInstance, Return) {
 	gi, r := nvml.Device(d).GetGpuInstanceById(id)
 	return nvmlGpuInstance(gi), Return(r)
 }
 
-// GetGpuInstanceProfileInfo returns the profile info of a GPU Instance
+// GetGpuInstanceProfileInfo returns the profile info of a GPU Instance.
 func (d nvmlDevice) GetGpuInstanceProfileInfo(profile int) (GpuInstanceProfileInfo, Return) {
 	p, r := nvml.Device(d).GetGpuInstanceProfileInfo(profile)
 	return GpuInstanceProfileInfo(p), Return(r)
 }
 
-// GetGpuInstancePossiblePlacements returns the possible placements of a GPU Instance
+// GetGpuInstancePossiblePlacements returns the possible placements of a GPU Instance.
 func (d nvmlDevice) GetGpuInstancePossiblePlacements(info *GpuInstanceProfileInfo) ([]GpuInstancePlacement, Return) {
 	nvmlPlacements, r := nvml.Device(d).GetGpuInstancePossiblePlacements((*nvml.GpuInstanceProfileInfo)(info))
 	var placements []GpuInstancePlacement
@@ -103,7 +103,7 @@ func (d nvmlDevice) GetGpuInstancePossiblePlacements(info *GpuInstanceProfileInf
 	return placements, Return(r)
 }
 
-// GetGpuInstances returns the set of GPU Instances associated with a Device
+// GetGpuInstances returns the set of GPU Instances associated with a Device.
 func (d nvmlDevice) GetGpuInstances(info *GpuInstanceProfileInfo) ([]GpuInstance, Return) {
 	nvmlGis, r := nvml.Device(d).GetGpuInstances((*nvml.GpuInstanceProfileInfo)(info))
 	var gis []GpuInstance
@@ -113,72 +113,72 @@ func (d nvmlDevice) GetGpuInstances(info *GpuInstanceProfileInfo) ([]GpuInstance
 	return gis, Return(r)
 }
 
-// CreateGpuInstanceWithPlacement creates a GPU Instance with a specific placement
+// CreateGpuInstanceWithPlacement creates a GPU Instance with a specific placement.
 func (d nvmlDevice) CreateGpuInstanceWithPlacement(info *GpuInstanceProfileInfo, placement *GpuInstancePlacement) (GpuInstance, Return) {
 	gi, r := nvml.Device(d).CreateGpuInstanceWithPlacement((*nvml.GpuInstanceProfileInfo)(info), (*nvml.GpuInstancePlacement)(placement))
 	return nvmlGpuInstance(gi), Return(r)
 }
 
-// GetMaxMigDeviceCount returns the maximum number of MIG devices that can be created on a Device
+// GetMaxMigDeviceCount returns the maximum number of MIG devices that can be created on a Device.
 func (d nvmlDevice) GetMaxMigDeviceCount() (int, Return) {
 	m, r := nvml.Device(d).GetMaxMigDeviceCount()
 	return m, Return(r)
 }
 
-// GetMigDeviceHandleByIndex returns the handle to a MIG device given its index
+// GetMigDeviceHandleByIndex returns the handle to a MIG device given its index.
 func (d nvmlDevice) GetMigDeviceHandleByIndex(Index int) (Device, Return) {
 	h, r := nvml.Device(d).GetMigDeviceHandleByIndex(Index)
 	return nvmlDevice(h), Return(r)
 }
 
-// GetGpuInstanceId returns the GPU Instance ID of a MIG device
+// GetGpuInstanceId returns the GPU Instance ID of a MIG device.
 func (d nvmlDevice) GetGpuInstanceId() (int, Return) {
 	gi, r := nvml.Device(d).GetGpuInstanceId()
 	return gi, Return(r)
 }
 
-// GetComputeInstanceId returns the Compute Instance ID of a MIG device
+// GetComputeInstanceId returns the Compute Instance ID of a MIG device.
 func (d nvmlDevice) GetComputeInstanceId() (int, Return) {
 	ci, r := nvml.Device(d).GetComputeInstanceId()
 	return ci, Return(r)
 }
 
-// GetCudaComputeCapability returns the compute capability major and minor versions for a device
+// GetCudaComputeCapability returns the compute capability major and minor versions for a device.
 func (d nvmlDevice) GetCudaComputeCapability() (int, int, Return) {
 	major, minor, r := nvml.Device(d).GetCudaComputeCapability()
 	return major, minor, Return(r)
 }
 
-// GetAttributes returns the device attributes for a MIG device
+// GetAttributes returns the device attributes for a MIG device.
 func (d nvmlDevice) GetAttributes() (DeviceAttributes, Return) {
 	a, r := nvml.Device(d).GetAttributes()
 	return DeviceAttributes(a), Return(r)
 }
 
-// GetName returns the product name of a Device
+// GetName returns the product name of a Device.
 func (d nvmlDevice) GetName() (string, Return) {
 	n, r := nvml.Device(d).GetName()
 	return n, Return(r)
 }
 
-// GetBrand returns the brand of a Device
+// GetBrand returns the brand of a Device.
 func (d nvmlDevice) GetBrand() (BrandType, Return) {
 	b, r := nvml.Device(d).GetBrand()
 	return BrandType(b), Return(r)
 }
 
-// GetArchitecture returns the architecture of a Device
+// GetArchitecture returns the architecture of a Device.
 func (d nvmlDevice) GetArchitecture() (DeviceArchitecture, Return) {
 	a, r := nvml.Device(d).GetArchitecture()
 	return DeviceArchitecture(a), Return(r)
 }
 
-// RegisterEvents registers the specified event set and type with the device
+// RegisterEvents registers the specified event set and type with the device.
 func (d nvmlDevice) RegisterEvents(EventTypes uint64, Set EventSet) Return {
 	return Return(nvml.Device(d).RegisterEvents(EventTypes, nvml.EventSet(Set)))
 }
 
-// GetSupportedEventTypes returns the events supported by the device
+// GetSupportedEventTypes returns the events supported by the device.
 func (d nvmlDevice) GetSupportedEventTypes() (uint64, Return) {
 	e, r := nvml.Device(d).GetSupportedEventTypes()
 	return e, Return(r)

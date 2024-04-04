@@ -22,17 +22,17 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-// String returns the string representation of a Return
+// String returns the string representation of a Return.
 func (r Return) String() string {
 	return errorStringFunc(nvml.Return(r))
 }
 
-// Error returns the string representation of a Return
+// Error returns the string representation of a Return.
 func (r Return) Error() string {
 	return errorStringFunc(nvml.Return(r))
 }
 
-// Assigned to nvml.ErrorString if the system nvml library is in use
+// Assigned to nvml.ErrorString if the system nvml library is in use.
 var errorStringFunc = defaultErrorStringFunc
 
 var defaultErrorStringFunc = func(r nvml.Return) string {
