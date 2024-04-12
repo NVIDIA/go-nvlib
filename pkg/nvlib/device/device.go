@@ -19,7 +19,7 @@ package device
 import (
 	"fmt"
 
-	"github.com/NVIDIA/go-nvlib/pkg/nvml"
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
 // Device defines the set of extended functions associated with a device.Device.
@@ -469,5 +469,5 @@ func (d *devicelib) hasSymbol(symbol string) bool {
 		return true
 	}
 
-	return d.nvml.Lookup(symbol) == nil
+	return d.nvml.Extensions().LookupSymbol(symbol) == nil
 }

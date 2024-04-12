@@ -17,7 +17,7 @@
 package device
 
 import (
-	"github.com/NVIDIA/go-nvlib/pkg/nvml"
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
 // Interface provides the API to the 'device' package.

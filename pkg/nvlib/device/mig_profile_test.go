@@ -22,7 +22,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NVIDIA/go-nvlib/pkg/nvml"
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/NVIDIA/go-nvml/pkg/nvml/mock"
 )
 
 type MigProfileInfoWrapper struct {
@@ -30,7 +31,7 @@ type MigProfileInfoWrapper struct {
 }
 
 func newMockDeviceLib() Interface {
-	mockDevice := &nvml.DeviceMock{
+	mockDevice := &mock.Device{
 		GetNameFunc: func() (string, nvml.Return) {
 			return "MockDevice", nvml.SUCCESS
 		},
@@ -69,7 +70,7 @@ func newMockDeviceLib() Interface {
 			return info, nvml.SUCCESS
 		},
 	}
-	mockNvml := &nvml.InterfaceMock{
+	mockNvml := &mock.Interface{
 		DeviceGetCountFunc: func() (int, nvml.Return) {
 			return 1, nvml.SUCCESS
 		},
