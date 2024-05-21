@@ -18,6 +18,7 @@ DOCKER ?= docker
 
 PCI_IDS_URL ?= https://pci-ids.ucw.cz/v2.2/pci.ids
 
+CHECK_TARGETS := lint
 TARGETS := binary build all check fmt assert-fmt generate lint vet test coverage
 DOCKER_TARGETS := $(patsubst %,docker-%, $(TARGETS))
 .PHONY: $(TARGETS) $(DOCKER_TARGETS) vendor check-vendor
@@ -28,7 +29,7 @@ build:
 	GOOS=$(GOOS) go build ./...
 
 all: check build binary
-check: assert-fmt lint vet
+check: $(CHECK_TARGETS)
 
 vendor:
 	go mod tidy
@@ -59,8 +60,7 @@ generate:
 	go generate $(MODULE)/...
 
 lint:
-	# We use `go list -f '{{.Dir}}' $(MODULE)/...` to skip the `vendor` folder.
-	go list -f '{{.Dir}}' $(MODULE)/... | grep -v pkg/nvml | xargs golint -set_exit_status
+	golangci-lint run ./...
 
 ## goimports: Apply goimports -local to the codebase
 goimports:
