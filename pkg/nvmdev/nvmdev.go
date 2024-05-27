@@ -321,21 +321,16 @@ func (m *Device) Delete() error {
 }
 
 // GetPhysicalFunction gets the physical PCI device backing a 'parent' device.
-func (p *ParentDevice) GetPhysicalFunction() (*nvpci.NvidiaPCIDevice, error) {
-	if !p.IsVF {
-		return p.NvidiaPCIDevice, nil
+func (p *ParentDevice) GetPhysicalFunction() *nvpci.NvidiaPCIDevice {
+	if p.SriovInfo.IsVF() {
+		return p.SriovInfo.VirtualFunction.PhysicalFunction
 	}
-
-	physfnPath, err := filepath.EvalSymlinks(path.Join(p.Path, "physfn"))
-	if err != nil {
-		return nil, fmt.Errorf("unable to resolve %s: %v", path.Join(p.Path, "physfn"), err)
-	}
-
-	return newNvidiaPCIDeviceFromPath(physfnPath)
+	// Either it is an SRIOV physical function or a non-SRIOV device, so return the device itself
+	return p.NvidiaPCIDevice
 }
 
 // GetPhysicalFunction gets the physical PCI device that a vGPU is created on.
-func (m *Device) GetPhysicalFunction() (*nvpci.NvidiaPCIDevice, error) {
+func (m *Device) GetPhysicalFunction() *nvpci.NvidiaPCIDevice {
 	return m.Parent.GetPhysicalFunction()
 }
 
