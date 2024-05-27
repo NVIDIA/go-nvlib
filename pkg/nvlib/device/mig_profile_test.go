@@ -79,7 +79,7 @@ func newMockDeviceLib() Interface {
 		},
 	}
 
-	return New(WithNvml(mockNvml), WithVerifySymbols(false))
+	return New(mockNvml, WithVerifySymbols(false))
 }
 
 func TestParseMigProfile(t *testing.T) {
