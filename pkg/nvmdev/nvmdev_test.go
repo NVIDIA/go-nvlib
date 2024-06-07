@@ -35,8 +35,7 @@ func TestNvmdev(t *testing.T) {
 
 	parentA100 := parentDevs[0]
 
-	pf, err := parentA100.GetPhysicalFunction()
-	require.Nil(t, err, "Error getting physical function backing the Mock A100 parent device")
+	pf := parentA100.GetPhysicalFunction()
 	require.Equal(t, "0000:3b:04.1", pf.Address, "Wrong address for Mock A100 physical function")
 
 	supported := parentA100.IsMDEVTypeSupported("A100-4C")
@@ -59,7 +58,6 @@ func TestNvmdev(t *testing.T) {
 	require.Equal(t, "vfio_mdev", mdevA100.Driver, "Wrong driver detected for mdev device")
 	require.Equal(t, 200, mdevA100.IommuGroup, "Wrong value for iommu_group")
 
-	pf, err = mdevA100.GetPhysicalFunction()
-	require.Nil(t, err, "Error getting the physical function for Mock A100 mediated device")
+	pf = mdevA100.GetPhysicalFunction()
 	require.Equal(t, "0000:3b:04.1", pf.Address, "Wrong address for Mock A100 physical function")
 }
