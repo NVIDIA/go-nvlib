@@ -18,6 +18,8 @@ package device
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
@@ -45,6 +47,42 @@ func (d *devicelib) NewMigDevice(handle nvml.Device) (MigDevice, error) {
 	if !isMig {
 		return nil, fmt.Errorf("not a MIG device")
 	}
+	return d.newMigDevice(handle)
+}
+
+// NewMigDeviceByIdentifier builds a new MigDevice for the specified identifier.
+// If the identifier is not a valid MIG identifier, an error is raised.
+func (d *devicelib) NewMigDeviceByIdentifier(id Identifier) (MigDevice, error) {
+	switch {
+	case id.IsMigUUID():
+		return d.NewMigDeviceByUUID(string(id))
+	case id.IsMigIndex():
+		split := strings.SplitN(string(id), ":", 2)
+		gpuIdx, err := strconv.Atoi(split[0])
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert device index to an int: %w", err)
+		}
+		migIdx, err := strconv.Atoi(split[1])
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert device index to an int: %w", err)
+		}
+		parent, err := d.NewDeviceByIndex(gpuIdx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get parent device handle: %w", err)
+		}
+		migDevice, ret := parent.GetMigDeviceHandleByIndex(migIdx)
+		if ret != nvml.SUCCESS {
+			return nil, fmt.Errorf("failed to get mig device by index: %w", ret)
+		}
+		return d.newMigDevice(migDevice)
+	default:
+		return nil, fmt.Errorf("invalid MIG device identifier: %v", id)
+	}
+}
+
+// newMigDevice constructs a new MigDevice for the supplied handle.
+// The handle is not checked for validity.
+func (d *devicelib) newMigDevice(handle nvml.Device) (MigDevice, error) {
 	return &migdevice{handle, d, nil}, nil
 }
 

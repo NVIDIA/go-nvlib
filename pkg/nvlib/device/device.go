@@ -18,6 +18,7 @@ package device
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
@@ -46,6 +47,31 @@ var _ Device = &device{}
 
 // NewDevice builds a new Device from an nvml.Device.
 func (d *devicelib) NewDevice(dev nvml.Device) (Device, error) {
+	return d.newDevice(dev)
+}
+
+// NewDeviceByIdentifier builds a new device from a device identifier.
+func (d *devicelib) NewDeviceByIdentifier(id Identifier) (Device, error) {
+	switch {
+	case id.IsGpuUUID():
+		return d.NewDeviceByUUID(string(id))
+	case id.IsGpuIndex():
+		idx, err := strconv.Atoi(string(id))
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert device index to an int: %w", err)
+		}
+		return d.NewDeviceByIndex(idx)
+	default:
+		return nil, fmt.Errorf("invalid device identifier: %v", id)
+	}
+}
+
+// NewDeviceByIndex builds a new Device for the specified index.
+func (d *devicelib) NewDeviceByIndex(index int) (Device, error) {
+	dev, ret := d.nvmllib.DeviceGetHandleByIndex(index)
+	if ret != nvml.SUCCESS {
+		return nil, fmt.Errorf("error getting device handle for index '%v': %v", index, ret)
+	}
 	return d.newDevice(dev)
 }
 
