@@ -242,7 +242,8 @@ func (m mdev) iommuGroup() (int, error) {
 
 // NewParentDevice constructs a ParentDevice.
 func NewParentDevice(devicePath string) (*ParentDevice, error) {
-	nvdevice, err := newNvidiaPCIDeviceFromPath(devicePath)
+	address := filepath.Base(devicePath)
+	nvdevice, err := nvpci.New().GetGPUByPciBusID(address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct NVIDIA PCI device: %v", err)
 	}
@@ -369,13 +370,4 @@ func (p *ParentDevice) GetAvailableMDEVInstances(mdevType string) (int, error) {
 	}
 
 	return availableInstances, nil
-}
-
-// newNvidiaPCIDeviceFromPath constructs an NvidiaPCIDevice for the specified device path.
-func newNvidiaPCIDeviceFromPath(devicePath string) (*nvpci.NvidiaPCIDevice, error) {
-	root := filepath.Dir(devicePath)
-	address := filepath.Base(devicePath)
-	return nvpci.New(
-		nvpci.WithPCIDevicesRoot(root),
-	).GetGPUByPciBusID(address)
 }
