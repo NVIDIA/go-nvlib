@@ -3,6 +3,7 @@ linters:
   enable:
     - asciicheck
     - contextcheck
+    - gocritic
     - godot
     - gofmt
     - goimports
@@ -10,7 +11,6 @@ linters:
 # TODO: re-enable once we have addressed the warnings
   disable:
     - unused
-    - gocritic
     - stylecheck
     - forcetypeassert
 
