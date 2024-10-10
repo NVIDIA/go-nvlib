@@ -281,6 +281,7 @@ func (p *nvpci) getGPUByPciBusID(address string, cache map[string]*NvidiaPCIDevi
 	}
 
 	driver, err := filepath.EvalSymlinks(path.Join(devicePath, "driver"))
+	// nolint:gocritic
 	if err == nil {
 		driver = filepath.Base(driver)
 	} else if os.IsNotExist(err) {
@@ -291,6 +292,7 @@ func (p *nvpci) getGPUByPciBusID(address string, cache map[string]*NvidiaPCIDevi
 
 	var iommuGroup int64
 	iommu, err := filepath.EvalSymlinks(path.Join(devicePath, "iommu_group"))
+	// nolint:gocritic
 	if err == nil {
 		iommuGroupStr := strings.TrimSpace(filepath.Base(iommu))
 		iommuGroup, err = strconv.ParseInt(iommuGroupStr, 0, 64)
@@ -359,6 +361,7 @@ func (p *nvpci) getGPUByPciBusID(address string, cache map[string]*NvidiaPCIDevi
 	var sriovInfo SriovInfo
 	// Device is a virtual function (VF) if "physfn" symlink exists.
 	physFnAddress, err := filepath.EvalSymlinks(path.Join(devicePath, "physfn"))
+	// nolint:gocritic
 	if err == nil {
 		physFn, err := p.getGPUByPciBusID(filepath.Base(physFnAddress), cache)
 		if err != nil {
