@@ -86,7 +86,7 @@ func (d *device) GetArchitectureAsString() (string, error) {
 	case nvml.DEVICE_ARCH_AMPERE:
 		return "Ampere", nil
 	case nvml.DEVICE_ARCH_ADA:
-		return "Ada", nil
+		return "Ada Lovelace", nil
 	case nvml.DEVICE_ARCH_HOPPER:
 		return "Hopper", nil
 	case nvml.DEVICE_ARCH_UNKNOWN:
