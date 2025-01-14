@@ -125,7 +125,7 @@ func (d *device) GetBrandAsString() (string, error) {
 	case nvml.BRAND_NVIDIA_VWS:
 		return "NvidiaVWS", nil
 	// Deprecated in favor of nvml.BRAND_NVIDIA_CLOUD_GAMING
-	//case nvml.BRAND_NVIDIA_VGAMING:
+	// case nvml.BRAND_NVIDIA_VGAMING:
 	//	return "VGaming", nil
 	case nvml.BRAND_NVIDIA_CLOUD_GAMING:
 		return "NvidiaCloudGaming", nil
