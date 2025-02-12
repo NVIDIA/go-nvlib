@@ -222,6 +222,9 @@ func (d *device) IsFabricAttached() (bool, error) {
 		if info.State != nvml.GPU_FABRIC_STATE_COMPLETED {
 			return false, nil
 		}
+		if info.ClusterUuid == [16]uint8{} {
+			return false, nil
+		}
 		if nvml.Return(info.Status) != nvml.SUCCESS {
 			return false, nil
 		}
@@ -238,6 +241,9 @@ func (d *device) IsFabricAttached() (bool, error) {
 			return false, fmt.Errorf("error getting GPU Fabric Info: %v", ret)
 		}
 		if info.State != nvml.GPU_FABRIC_STATE_COMPLETED {
+			return false, nil
+		}
+		if info.ClusterUuid == [16]uint8{} {
 			return false, nil
 		}
 		if nvml.Return(info.Status) != nvml.SUCCESS {
