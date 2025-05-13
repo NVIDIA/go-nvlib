@@ -25,12 +25,12 @@ import (
 
 func TestResolvePlatform(t *testing.T) {
 	testCases := []struct {
-		platform            string
-		hasTegraFiles       bool
-		hasDXCore           bool
-		hasNVML             bool
-		usesOnlyNVGPUModule bool
-		expected            string
+		platform              string
+		hasTegraFiles         bool
+		hasDXCore             bool
+		hasNVML               bool
+		hasOnlyIntegratedGPUs bool
+		expected              string
 	}{
 		{
 			platform:  "auto",
@@ -59,12 +59,12 @@ func TestResolvePlatform(t *testing.T) {
 			expected:      "nvml",
 		},
 		{
-			platform:            "auto",
-			hasDXCore:           false,
-			hasTegraFiles:       true,
-			hasNVML:             true,
-			usesOnlyNVGPUModule: true,
-			expected:            "tegra",
+			platform:              "auto",
+			hasDXCore:             false,
+			hasTegraFiles:         true,
+			hasNVML:               true,
+			hasOnlyIntegratedGPUs: true,
+			expected:              "tegra",
 		},
 		{
 			platform:      "nvml",
@@ -97,8 +97,8 @@ func TestResolvePlatform(t *testing.T) {
 					HasTegraFilesFunc: func() (bool, string) {
 						return tc.hasTegraFiles, ""
 					},
-					UsesOnlyNVGPUModuleFunc: func() (bool, string) {
-						return tc.usesOnlyNVGPUModule, ""
+					HasOnlyIntegratedGPUsFunc: func() (bool, string) {
+						return tc.hasOnlyIntegratedGPUs, ""
 					},
 				}),
 				WithPlatform(Platform(tc.platform)),
