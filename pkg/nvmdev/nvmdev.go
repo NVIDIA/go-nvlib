@@ -57,6 +57,7 @@ type ParentDevice struct {
 type Device struct {
 	Path       string
 	UUID       string
+	MDEVName   string
 	MDEVType   string
 	Driver     string
 	IommuGroup int
@@ -159,6 +160,11 @@ func (n *nvmdev) NewDevice(root string, uuid string) (*Device, error) {
 		return nil, nil
 	}
 
+	mdevName, err := m.name()
+	if err != nil {
+		return nil, fmt.Errorf("error geting mdev name: %v", err)
+	}
+
 	mdevType, err := m.Type()
 	if err != nil {
 		return nil, fmt.Errorf("error getting mdev type: %v", err)
@@ -177,6 +183,7 @@ func (n *nvmdev) NewDevice(root string, uuid string) (*Device, error) {
 	device := Device{
 		Path:       path,
 		UUID:       uuid,
+		MDEVName:   mdevName,
 		MDEVType:   mdevType,
 		Driver:     driver,
 		IommuGroup: iommuGroup,
@@ -216,24 +223,34 @@ func (m mdev) parentDevicePath() string {
 	return path.Dir(string(m))
 }
 
-func (m mdev) Type() (string, error) {
+func (m mdev) name() (string, error) {
 	mdevTypeDir, err := m.resolve("mdev_type")
 	if err != nil {
 		return "", err
 	}
 
-	mdevType, err := os.ReadFile(path.Join(mdevTypeDir, "name"))
+	mdevName, err := os.ReadFile(path.Join(mdevTypeDir, "name"))
 	if err != nil {
 		return "", fmt.Errorf("unable to read mdev_type name for mdev %s: %v", m, err)
 	}
-	// file in the format: [NVIDIA|GRID] <vGPU type>
-	mdevTypeStr := strings.TrimSpace(string(mdevType))
-	mdevTypeSplit := strings.SplitN(mdevTypeStr, " ", 2)
-	if len(mdevTypeSplit) != 2 {
-		return "", fmt.Errorf("unable to parse mdev_type name %s for mdev %s", mdevTypeStr, m)
+	mdevNameStr := strings.TrimSpace(string(mdevName))
+
+	return mdevNameStr, nil
+}
+
+func (m mdev) Type() (string, error) {
+	mdevName, err := m.name()
+	if err != nil {
+		return "", fmt.Errorf("error getting the mdev_type name: %v", err)
 	}
 
-	return mdevTypeSplit[1], nil
+	// mdevName is in the format: [NVIDIA|GRID] <vGPU type>
+	mdevNameSplit := strings.SplitN(mdevName, " ", 2)
+	if len(mdevNameSplit) != 2 {
+		return "", fmt.Errorf("unable to parse mdev_type name '%s' for mdev %s", mdevName, m)
+	}
+
+	return mdevNameSplit[1], nil
 }
 
 func (m mdev) driver() (string, error) {
