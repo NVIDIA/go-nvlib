@@ -48,16 +48,23 @@ func newMockDeviceLib() Interface {
 			info := nvml.GpuInstanceProfileInfo{}
 			switch Profile {
 			case nvml.GPU_INSTANCE_PROFILE_1_SLICE,
-				nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV1:
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV1,
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX,
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_NO_ME,
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_ALL_ME:
 				info.MemorySizeMB = 5 * 1024
 			case nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV2:
 				info.MemorySizeMB = 10 * 1024
 			case nvml.GPU_INSTANCE_PROFILE_2_SLICE,
-				nvml.GPU_INSTANCE_PROFILE_2_SLICE_REV1:
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_REV1,
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX,
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_NO_ME,
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_ALL_ME:
 				info.MemorySizeMB = 10 * 1024
 			case nvml.GPU_INSTANCE_PROFILE_3_SLICE:
 				info.MemorySizeMB = 20 * 1024
-			case nvml.GPU_INSTANCE_PROFILE_4_SLICE:
+			case nvml.GPU_INSTANCE_PROFILE_4_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX:
 				info.MemorySizeMB = 20 * 1024
 			case nvml.GPU_INSTANCE_PROFILE_7_SLICE:
 				info.MemorySizeMB = 40 * 1024

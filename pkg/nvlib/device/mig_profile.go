@@ -28,7 +28,9 @@ import (
 
 const (
 	// AttributeMediaExtensions holds the string representation for the media extension MIG profile attribute.
-	AttributeMediaExtensions = "me"
+	AttributeMediaExtensions    = "me"
+	AttributeMediaExtensionsAll = "me.all"
+	AttributeGraphics           = "gfx"
 )
 
 // MigProfile represents a specific MIG profile.
@@ -59,14 +61,21 @@ func (d *devicelib) NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, 
 	switch giProfileID {
 	case nvml.GPU_INSTANCE_PROFILE_1_SLICE,
 		nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV1,
-		nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV2:
+		nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV2,
+		nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX,
+		nvml.GPU_INSTANCE_PROFILE_1_SLICE_NO_ME,
+		nvml.GPU_INSTANCE_PROFILE_1_SLICE_ALL_ME:
 		giSlices = 1
 	case nvml.GPU_INSTANCE_PROFILE_2_SLICE,
-		nvml.GPU_INSTANCE_PROFILE_2_SLICE_REV1:
+		nvml.GPU_INSTANCE_PROFILE_2_SLICE_REV1,
+		nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX,
+		nvml.GPU_INSTANCE_PROFILE_2_SLICE_NO_ME,
+		nvml.GPU_INSTANCE_PROFILE_2_SLICE_ALL_ME:
 		giSlices = 2
 	case nvml.GPU_INSTANCE_PROFILE_3_SLICE:
 		giSlices = 3
-	case nvml.GPU_INSTANCE_PROFILE_4_SLICE:
+	case nvml.GPU_INSTANCE_PROFILE_4_SLICE,
+		nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX:
 		giSlices = 4
 	case nvml.GPU_INSTANCE_PROFILE_6_SLICE:
 		giSlices = 6
@@ -104,6 +113,13 @@ func (d *devicelib) NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, 
 	case nvml.GPU_INSTANCE_PROFILE_1_SLICE_REV1,
 		nvml.GPU_INSTANCE_PROFILE_2_SLICE_REV1:
 		attrs = append(attrs, AttributeMediaExtensions)
+	case nvml.GPU_INSTANCE_PROFILE_1_SLICE_ALL_ME,
+		nvml.GPU_INSTANCE_PROFILE_2_SLICE_ALL_ME:
+		attrs = append(attrs, AttributeMediaExtensionsAll)
+	case nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX,
+		nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX,
+		nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX:
+		attrs = append(attrs, AttributeGraphics)
 	}
 
 	p := &MigProfileInfo{
