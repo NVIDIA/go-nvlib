@@ -61,3 +61,66 @@ func TestNvmdev(t *testing.T) {
 	pf = mdevA100.GetPhysicalFunction()
 	require.Equal(t, "0000:3b:04.1", pf.Address, "Wrong address for Mock A100 physical function")
 }
+
+func TestParseMdevTypeName(t *testing.T) {
+	testCases := []struct {
+		name         string
+		mdevTypeStr  string
+		expectedType string
+		expectError  bool
+	}{
+		{
+			name:         "NVIDIA prefix format",
+			mdevTypeStr:  "NVIDIA A100-4C",
+			expectedType: "A100-4C",
+			expectError:  false,
+		},
+		{
+			name:         "GRID prefix format",
+			mdevTypeStr:  "GRID V100-8Q",
+			expectedType: "V100-8Q",
+			expectError:  false,
+		},
+		{
+			name:         "Multi-word NVIDIA prefix format",
+			mdevTypeStr:  "NVIDIA RTX Pro 6000 Blackwell A100-4C",
+			expectedType: "A100-4C",
+			expectError:  false,
+		},
+		{
+			name:         "Complex multi-word prefix",
+			mdevTypeStr:  "NVIDIA RTX A6000 Ada Generation H100-8C",
+			expectedType: "H100-8C",
+			expectError:  false,
+		},
+		{
+			name:         "Single word only",
+			mdevTypeStr:  "A100-4C",
+			expectedType: "A100-4C",
+			expectError:  false,
+		},
+		{
+			name:        "Empty string",
+			mdevTypeStr: "",
+			expectError: true,
+		},
+		{
+			name:        "Only spaces",
+			mdevTypeStr: "   ",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualType, err := parseMdevTypeName(tc.mdevTypeStr)
+
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedType, actualType)
+			}
+		})
+	}
+}
