@@ -184,19 +184,16 @@ func (d *device) IsCoherent() (bool, error) {
 	if !d.lib.hasSymbol("nvmlDeviceGetAddressingMode") {
 		return false, nil
 	}
-	return false, nil
 
-	// TODO: Implement as follows:
-	/**
 	mode, ret := nvml.Device(d).GetAddressingMode()
 	if ret == nvml.ERROR_NOT_SUPPORTED {
 		return false, nil
 	}
-	ret != nvml.SUCCESS {
+	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("error getting addresing mode: %v", ret)
 	}
 
-	switch mode {
+	switch nvml.DeviceAddressingModeType(mode.Value) {
 	case nvml.DEVICE_ADDRESSING_MODE_HMM:
 		return true, nil
 	case nvml.DEVICE_ADDRESSING_MODE_ATS:
@@ -205,7 +202,6 @@ func (d *device) IsCoherent() (bool, error) {
 		return false, nil
 	}
 	return false, nil
-	**/
 }
 
 // IsMigCapable checks if a device is capable of having MIG paprtitions created on it.
