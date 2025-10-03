@@ -77,4 +77,13 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version: ${{ env.GOLANG_VERSION }}
-    - run: make build
+
+    - name: JFrog Artifactory
+      id: jfrog-artifactory
+      uses: ./.github/actions/jfrog-artifactory-action
+      with:
+        artifactory-endpoint: ${{ secrets.OIDC_ARTIFACTORY_ENDPOINT }}
+
+    - env:
+        GOPROXY: ${{ steps.jfrog-artifactory.outputs.goproxy-url }}
+      run: make build

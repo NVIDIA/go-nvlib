@@ -1,0 +1,32 @@
+name: 'JFrog Artifactory GOPROXY'
+description: 'Composite GitHub Action which signs into the JFrog Artifactory and retrieves the URL of the Go Module Proxy'
+inputs:
+  artifactory-endpoint:
+    description: "The endpoint for OIDC access to Artifactory instance"
+    required: true
+outputs:
+  goproxy:
+    description: "The URL to the Go module proxy. Set this value to your GOPROXY environment variable"
+    value: ${{ steps.get-goproxy.outputs.goproxy-url }}
+runs:
+  using: "composite"
+  steps:
+    - name: Setup JFrog CLI
+      id: jfrog
+      uses: jfrog/setup-jfrog-cli@v4
+      env:
+        JF_URL: https://${{ inputs.artifactory-endpoint }}/
+      with:
+        oidc-provider-name: nvgithub
+        oidc-audience: ${{ inputs.artifactory-endpoint }}
+    - name: Retrieve the Artifactory GOPROXY
+      id: get-goproxy
+      env:
+        OIDC_USER: ${{ steps.jfrog.outputs.oidc-user }}
+        OIDC_TOKEN: ${{ steps.jfrog.outputs.oidc-token }}
+        OIDC_ARTIFACTORY_ENDPOINT: ${{ inputs.artifactory-endpoint }}
+      run: |
+        OIDC_USER_ENCODED=$(python3 -c 'import urllib.parse, os; print(urllib.parse.quote_plus(os.environ["OIDC_USER"]))')
+        export GOPROXY="https://${OIDC_USER_ENCODED}:${OIDC_TOKEN}@${OIDC_ARTIFACTORY_ENDPOINT}/artifactory/api/go/edge-go-remote-virtual"
+        echo "goproxy-url=$(echo $GOPROXY)" >> $GITHUB_OUTPUT
+      shell: bash
