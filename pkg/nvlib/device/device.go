@@ -163,11 +163,11 @@ func (d *device) GetAddressingModeAsString() (string, error) {
 
 	switch nvml.DeviceAddressingModeType(mode.Value) {
 	case nvml.DEVICE_ADDRESSING_MODE_ATS:
-		return "ats", nil
+		return "ATS", nil
 	case nvml.DEVICE_ADDRESSING_MODE_HMM:
-		return "hmm", nil
+		return "HMM", nil
 	case nvml.DEVICE_ADDRESSING_MODE_NONE:
-		return "none", nil
+		return "None", nil
 	}
 
 	return "", fmt.Errorf("error interpreting addressing mode as string: %v", mode)
