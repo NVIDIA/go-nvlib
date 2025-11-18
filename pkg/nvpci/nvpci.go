@@ -296,7 +296,7 @@ func (p *nvpci) getGPUByPciBusID(address string, cache map[string]*NvidiaPCIDevi
 	iommuFD, err := getIOMMUFD(devicePath)
 	if err != nil {
 		// log a warning, do not return an error as this host may not have iommufd configured/supported
-		p.logger.Warningf("unable to detect IOMMU FD for %s: %w", address, err)
+		p.logger.Warningf("unable to detect IOMMU FD for %s: %v", address, err)
 	}
 
 	numa, err := os.ReadFile(path.Join(devicePath, "numa_node"))

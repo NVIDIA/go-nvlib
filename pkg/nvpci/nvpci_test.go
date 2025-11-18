@@ -97,7 +97,7 @@ func TestNvpciIOMMUFD(t *testing.T) {
 			devices, err := nvpci.GetGPUs()
 			require.Nil(t, err, "Error getting GPUs")
 			require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
-			require.Equal(t, 8, devices[0].IommuFD, "Wrong IOMMUFD found for device")
+			require.Equal(t, "vfio8", devices[0].IommuFD, "Wrong IOMMUFD found for device")
 		})
 	}
 }
