@@ -74,6 +74,33 @@ func TestNvpci(t *testing.T) {
 	_, err = nvpci.GetGPUByIndex(1)
 	require.Error(t, err, "No error returned when getting GPU at invalid index")
 }
+func TestNvpciIOMMUFD(t *testing.T) {
+	testCases := []struct {
+		Description string
+		IOMMUFD     int
+	}{
+		{
+			Description: "IOMMUFD 8",
+			IOMMUFD:     8,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Description, func(t *testing.T) {
+			nvpci, err := NewMockNvpci()
+			require.Nil(t, err, "Error creating NewMockNvpci")
+			defer nvpci.Cleanup()
+
+			err = nvpci.AddMockA100("0000:80:05.1", 0, nil)
+			require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+			devices, err := nvpci.GetGPUs()
+			require.Nil(t, err, "Error getting GPUs")
+			require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
+			require.Equal(t, "vfio8", devices[0].IommuFD, "Wrong IOMMUFD found for device")
+		})
+	}
+}
 
 func TestNvpciNUMANode(t *testing.T) {
 	testCases := []struct {
