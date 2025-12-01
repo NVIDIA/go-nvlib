@@ -26,6 +26,7 @@ import (
 func TestResolvePlatform(t *testing.T) {
 	testCases := []struct {
 		platform           string
+		platformOverride   string
 		hasTegraFiles      bool
 		hasDXCore          bool
 		hasNVML            bool
@@ -82,10 +83,16 @@ func TestResolvePlatform(t *testing.T) {
 			hasDXCore: true,
 			expected:  "not-auto",
 		},
+		{
+			platform:         "auto",
+			platformOverride: "overridden",
+			expected:         "overridden",
+		},
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
+			defer setGetPlatformOverrideForTest(tc.platformOverride)()
 			l := New(
 				WithPropertyExtractor(&PropertyExtractorMock{
 					HasDXCoreFunc: func() (bool, string) {
@@ -106,5 +113,18 @@ func TestResolvePlatform(t *testing.T) {
 
 			require.Equal(t, Platform(tc.expected), l.ResolvePlatform())
 		})
+	}
+}
+
+// setGetPlatformOverrideForTest overrides the distribution IDs that would normally be read from the /etc/os-release file.
+func setGetPlatformOverrideForTest(override string) func() {
+	original := getPlaformOverride
+
+	getPlaformOverride = func() (string, string) {
+		return override, "overridden for test"
+	}
+
+	return func() {
+		getPlaformOverride = original
 	}
 }
