@@ -18,6 +18,7 @@ package info
 
 import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/go-logr/logr"
 
 	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
 )
@@ -33,7 +34,7 @@ func WithDeviceLib(devicelib device.Interface) Option {
 }
 
 // WithLogger sets the logger for the library.
-func WithLogger(logger basicLogger) Option {
+func WithLogger(logger logr.Logger) Option {
 	return func(i *options) {
 		i.logger = logger
 	}
