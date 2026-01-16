@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-logr/logr"
+
 	"github.com/NVIDIA/go-nvlib/pkg/pciids"
 )
 
@@ -71,7 +73,7 @@ type ResourceInterface interface {
 }
 
 type nvpci struct {
-	logger         logger
+	logger         logr.Logger
 	pciDevicesRoot string
 	pcidbPath      string
 }
@@ -165,9 +167,6 @@ func New(opts ...Option) Interface {
 	for _, opt := range opts {
 		opt(n)
 	}
-	if n.logger == nil {
-		n.logger = &simpleLogger{}
-	}
 	if n.pciDevicesRoot == "" {
 		n.pciDevicesRoot = PCIDevicesRoot
 	}
@@ -178,7 +177,7 @@ func New(opts ...Option) Interface {
 type Option func(*nvpci)
 
 // WithLogger provides an Option to set the logger for the library.
-func WithLogger(logger logger) Option {
+func WithLogger(logger logr.Logger) Option {
 	return func(n *nvpci) {
 		n.logger = logger
 	}
@@ -311,7 +310,7 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 	iommuFD, err := getIOMMUFD(devicePath)
 	if err != nil {
 		// log a warning, do not return an error as this host may not have iommufd configured/supported
-		p.logger.Warningf("unable to detect IOMMU FD for %s: %v", address, err)
+		p.logger.Error(err, "unable to detect IOMMU FD", "address", address)
 	}
 
 	numa, err := os.ReadFile(path.Join(devicePath, "numa_node"))
@@ -358,12 +357,12 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 
 	deviceName, err := pciDB.GetDeviceName(uint16(vendorID), uint16(deviceID))
 	if err != nil {
-		p.logger.Warningf("unable to get device name: %v\n", err)
+		p.logger.Error(err, "unable to get device name")
 		deviceName = UnknownDeviceString
 	}
 	className, err := pciDB.GetClassName(uint32(classID))
 	if err != nil {
-		p.logger.Warningf("unable to get class name for device: %v\n", err)
+		p.logger.Error(err, "unable to get class name for device")
 		className = UnknownClassString
 	}
 

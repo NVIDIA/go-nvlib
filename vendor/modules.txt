@@ -6,6 +6,9 @@ github.com/NVIDIA/go-nvml/pkg/nvml/mock
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/go-logr/logr v1.4.3
+## explicit; go 1.18
+github.com/go-logr/logr
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid

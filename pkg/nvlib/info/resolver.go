@@ -16,6 +16,8 @@
 
 package info
 
+import "github.com/go-logr/logr"
+
 // Platform represents a supported plaform.
 type Platform string
 
@@ -28,28 +30,28 @@ const (
 )
 
 type platformResolver struct {
-	logger            basicLogger
+	logger            logr.Logger
 	platform          Platform
 	propertyExtractor PropertyExtractor
 }
 
 func (p platformResolver) ResolvePlatform() Platform {
 	if p.platform != PlatformAuto {
-		p.logger.Infof("Using requested platform '%s'", p.platform)
+		p.logger.Info("Using requested platform", "platform", p.platform)
 		return p.platform
 	}
 
 	hasDXCore, reason := p.propertyExtractor.HasDXCore()
-	p.logger.Debugf("Is WSL-based system? %v: %v", hasDXCore, reason)
+	p.logger.V(4).Info("Is WSL-based system?", "hasDXhasDXCore", hasDXCore, "reason", reason)
 
 	hasTegraFiles, reason := p.propertyExtractor.HasTegraFiles()
-	p.logger.Debugf("Is Tegra-based system? %v: %v", hasTegraFiles, reason)
+	p.logger.V(4).Info("Is Tegra-based system?", "hasTegraFiles", hasTegraFiles, "reason", reason)
 
 	hasNVML, reason := p.propertyExtractor.HasNvml()
-	p.logger.Debugf("Is NVML-based system? %v: %v", hasNVML, reason)
+	p.logger.V(4).Info("Is NVML-based system?", "hasNVML", hasNVML, "reason", reason)
 
 	hasAnIntegratedGPU, reason := p.propertyExtractor.HasAnIntegratedGPU()
-	p.logger.Debugf("Has an integrated GPU? %v: %v", hasAnIntegratedGPU, reason)
+	p.logger.V(4).Info("Has an integrated GPU?", "hasAnIntegratedGPU", hasAnIntegratedGPU, "reason", reason)
 
 	switch {
 	case hasDXCore:

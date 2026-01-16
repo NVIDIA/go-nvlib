@@ -18,6 +18,7 @@ package info
 
 import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/go-logr/logr"
 
 	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
 )
@@ -28,7 +29,7 @@ type infolib struct {
 }
 
 type options struct {
-	logger    basicLogger
+	logger    logr.Logger
 	root      root
 	nvmllib   nvml.Interface
 	devicelib device.Interface
@@ -42,9 +43,6 @@ func New(opts ...Option) Interface {
 	o := &options{}
 	for _, opt := range opts {
 		opt(o)
-	}
-	if o.logger == nil {
-		o.logger = &nullLogger{}
 	}
 	if o.root == "" {
 		o.root = "/"
