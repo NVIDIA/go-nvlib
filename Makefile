@@ -23,10 +23,8 @@ TARGETS := binary build all check fmt assert-fmt generate lint vet test coverage
 DOCKER_TARGETS := $(patsubst %,docker-%, $(TARGETS))
 .PHONY: $(TARGETS) $(DOCKER_TARGETS) vendor check-vendor
 
-GOOS := linux
-
 build:
-	GOOS=$(GOOS) go build ./...
+	go build ./...
 
 all: check build binary
 check: $(CHECK_TARGETS)
@@ -75,7 +73,7 @@ vet:
 
 COVERAGE_FILE := coverage.out
 test: build
-	go test -v -coverprofile=$(COVERAGE_FILE) $(MODULE)/...
+	go test -coverprofile=$(COVERAGE_FILE) $(MODULE)/...
 
 coverage: test
 	cat $(COVERAGE_FILE) | grep -v "_mock.go" > $(COVERAGE_FILE).no-mocks
