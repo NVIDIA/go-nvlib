@@ -16,6 +16,13 @@
 
 package info
 
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
+
 // Platform represents a supported plaform.
 type Platform string
 
@@ -61,4 +68,36 @@ func (p platformResolver) ResolvePlatform() Platform {
 	default:
 		return PlatformUnknown
 	}
+}
+
+// getPlatformOverride checks the system for a platform override file.
+// This allows system administrators to force the detection of a specific
+// platform.
+//
+// The first non-empty and non-comment line (starting with #) in the file is
+// returned.
+//
+// Note that no checks are performed for a valid platform value.
+//
+// This function can be overridden for testing purposes.
+var getPlaformOverride = func() (string, string) {
+	platformOverrideFile, err := os.Open("/etc/nvidia-container-toolkit/platform-override")
+	if os.IsNotExist(err) {
+		return "", "platform-override file does not exist"
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to open platform-override file: %w", err).Error()
+	}
+	defer platformOverrideFile.Close()
+
+	scanner := bufio.NewScanner(platformOverrideFile)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		return line, "read from platform-override file"
+	}
+
+	return "", "empty platform-override file"
 }

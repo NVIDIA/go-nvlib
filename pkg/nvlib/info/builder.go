@@ -57,9 +57,6 @@ func New(opts ...Option) Interface {
 	if o.devicelib == nil {
 		o.devicelib = device.New(o.nvmllib)
 	}
-	if o.platform == "" {
-		o.platform = PlatformAuto
-	}
 	if o.propertyExtractor == nil {
 		o.propertyExtractor = &propertyExtractor{
 			root:      o.root,
@@ -70,9 +67,25 @@ func New(opts ...Option) Interface {
 	return &infolib{
 		PlatformResolver: &platformResolver{
 			logger:            o.logger,
-			platform:          o.platform,
+			platform:          o.normalizePlatform(),
 			propertyExtractor: o.propertyExtractor,
 		},
 		PropertyExtractor: o.propertyExtractor,
 	}
+}
+
+func (o options) normalizePlatform() Platform {
+	if o.platform != "" && o.platform != PlatformAuto {
+		return o.platform
+	}
+
+	override, reason := getPlaformOverride()
+	if override != "" {
+		o.logger.Debugf("Using platform-override %q", override)
+		return Platform(override)
+	}
+
+	o.logger.Debugf("No platform-override detected: %v", reason)
+
+	return PlatformAuto
 }
