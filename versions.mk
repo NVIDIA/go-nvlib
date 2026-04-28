@@ -22,7 +22,7 @@ VERSION ?= $(word 1,$(PARTS))
 # vVERSION represents the version with a guaranteed v-prefix
 vVERSION := v$(VERSION:v%=%)
 
-GOLANG_VERSION ?= 1.23.5
+GOLANG_VERSION ?= 1.25.0
 
 ifeq ($(IMAGE),)
 REGISTRY ?= nvidia
@@ -38,5 +38,7 @@ GOLANGCI_LINT_VERSION ?= v1.52.0
 MOQ_VERSION ?= v0.3.4
 
 BUILDIMAGE ?= ghcr.io/nvidia/k8s-test-infra:devel-go$(GOLANG_VERSION)
+# docker-test only requires a Go toolchain; use a published image by default.
+TEST_BUILDIMAGE ?= golang:$(GOLANG_VERSION)
 DOCKERFILE_DEVEL := "images/devel/Dockerfile"
 K8S_TEST_INFRA := "https://github.com/NVIDIA/k8s-test-infra.git"

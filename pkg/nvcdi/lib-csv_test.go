@@ -1,0 +1,390 @@
+/**
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+**/
+
+package nvcdi
+
+import (
+	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/NVIDIA/go-nvml/pkg/nvml/mock"
+	testlog "github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
+	"tags.cncf.io/container-device-interface/pkg/cdi"
+	"tags.cncf.io/container-device-interface/specs-go"
+
+	"github.com/NVIDIA/go-nvlib/internal/devices"
+	"github.com/NVIDIA/go-nvlib/internal/discover"
+	"github.com/NVIDIA/go-nvlib/internal/lookup/root"
+	"github.com/NVIDIA/go-nvlib/internal/test"
+	"github.com/NVIDIA/go-nvlib/internal/test/to"
+	"github.com/NVIDIA/go-nvlib/pkg/nvcdi/internal/edits"
+	"github.com/NVIDIA/go-nvlib/pkg/nvlib/device"
+)
+
+func TestDeviceSpecGenerators(t *testing.T) {
+	defer devices.SetAllForTest()()
+
+	moduleRoot, err := test.GetModuleRoot()
+	require.NoError(t, err)
+
+	logger, _ := testlog.NewNullLogger()
+
+	lookupRoot := filepath.Join(moduleRoot, "testdata", "lookup")
+
+	testCases := []struct {
+		description string
+
+		rootfsFolder string
+
+		lib                 *csvlib
+		expectedError       error
+		expectedSpecError   error
+		expectedDeviceSpecs []specs.Device
+		expectedCommonEdits *cdi.ContainerEdits
+	}{
+		{
+			description:  "single orin CSV device",
+			rootfsFolder: "rootfs-orin",
+			lib: &csvlib{
+				platformlibs: platformlibs{
+					// test-case specific
+					infolib: &infoInterfaceMock{
+						HasNvmlFunc: func() (bool, string) { return true, "forced" },
+					},
+					nvmllib: mockOrinServer(),
+				},
+			},
+			expectedDeviceSpecs: []specs.Device{
+				{
+					Name: "0",
+					ContainerEdits: specs.ContainerEdits{
+						DeviceNodes: []*specs.DeviceNode{
+							{Path: "/dev/nvidia0", HostPath: "/dev/nvidia0"},
+						},
+					},
+				},
+			},
+			expectedCommonEdits: &cdi.ContainerEdits{
+				ContainerEdits: &specs.ContainerEdits{
+					Mounts: []*specs.Mount{
+						{HostPath: "/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so.1.1", ContainerPath: "/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so.1.1", Options: []string{"ro", "nosuid", "nodev", "rbind", "rprivate"}},
+						{HostPath: "/usr/lib/aarch64-linux-gnu/nvidia/libnvidia-ml.so.1", ContainerPath: "/usr/lib/aarch64-linux-gnu/nvidia/libnvidia-ml.so.1", Options: []string{"ro", "nosuid", "nodev", "rbind", "rprivate"}},
+					},
+					Hooks: []*specs.Hook{
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "create-symlinks", "--link", "libcuda.so.1::/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "enable-cuda-compat", "--host-cuda-version=13.1", "--cuda-compat-container-root=/usr/local/cuda/compat_orin"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "update-ldcache", "--folder", "/usr/lib/aarch64-linux-gnu/nvidia"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+					},
+				},
+			},
+		},
+		{
+			description:  "single orin CSV device; custom container compat root",
+			rootfsFolder: "rootfs-orin",
+			lib: &csvlib{
+				platformlibs: platformlibs{
+					// test-case specific
+					infolib: &infoInterfaceMock{
+						HasNvmlFunc: func() (bool, string) { return true, "forced" },
+					},
+					nvmllib: mockOrinServer(),
+				},
+				csv: csvOptions{
+					CompatContainerRoot: "/another/compat/root",
+				},
+			},
+			expectedDeviceSpecs: []specs.Device{
+				{
+					Name: "0",
+					ContainerEdits: specs.ContainerEdits{
+						DeviceNodes: []*specs.DeviceNode{
+							{Path: "/dev/nvidia0", HostPath: "/dev/nvidia0"},
+						},
+					},
+				},
+			},
+			expectedCommonEdits: &cdi.ContainerEdits{
+				ContainerEdits: &specs.ContainerEdits{
+					Mounts: []*specs.Mount{
+						{HostPath: "/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so.1.1", ContainerPath: "/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so.1.1", Options: []string{"ro", "nosuid", "nodev", "rbind", "rprivate"}},
+						{HostPath: "/usr/lib/aarch64-linux-gnu/nvidia/libnvidia-ml.so.1", ContainerPath: "/usr/lib/aarch64-linux-gnu/nvidia/libnvidia-ml.so.1", Options: []string{"ro", "nosuid", "nodev", "rbind", "rprivate"}},
+					},
+					Hooks: []*specs.Hook{
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "create-symlinks", "--link", "libcuda.so.1::/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "enable-cuda-compat", "--host-cuda-version=13.1", "--cuda-compat-container-root=/another/compat/root"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "update-ldcache", "--folder", "/usr/lib/aarch64-linux-gnu/nvidia"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+					},
+				},
+			},
+		},
+		{
+			description:  "thor device with dGPU",
+			rootfsFolder: "rootfs-thor-dgpu",
+			lib: &csvlib{
+				platformlibs: platformlibs{
+					// test-case specific
+					infolib: &infoInterfaceMock{
+						HasNvmlFunc: func() (bool, string) { return true, "forced" },
+					},
+					nvmllib: mockIGXServer(),
+				},
+			},
+			expectedDeviceSpecs: []specs.Device{
+				{
+					Name: "0",
+					ContainerEdits: specs.ContainerEdits{
+						AdditionalGIDs: []uint32{44},
+						DeviceNodes: []*specs.DeviceNode{
+							{Path: "/dev/nvidia0", HostPath: "/dev/nvidia0"},
+							{Path: "/dev/nvidiactl", HostPath: "/dev/nvidiactl"},
+							{Path: "/dev/nvmap", HostPath: "/dev/nvmap", FileMode: to.Ptr(os.FileMode(0400)), Permissions: "rwm", GID: to.Ptr[uint32](44)},
+							{Path: "/dev/nvidia2", HostPath: "/dev/nvidia2"},
+						},
+					},
+				},
+				{
+					Name: "1",
+					ContainerEdits: specs.ContainerEdits{
+						AdditionalGIDs: []uint32{44},
+						DeviceNodes: []*specs.DeviceNode{
+							{Path: "/dev/nvidia1", HostPath: "/dev/nvidia1"},
+							{Path: "/dev/nvidiactl", HostPath: "/dev/nvidiactl"},
+							{Path: "/dev/nvmap", HostPath: "/dev/nvmap", FileMode: to.Ptr(os.FileMode(0400)), Permissions: "rwm", GID: to.Ptr[uint32](44)},
+						},
+					},
+				},
+			},
+			expectedCommonEdits: &cdi.ContainerEdits{
+				ContainerEdits: &specs.ContainerEdits{
+					Hooks: []*specs.Hook{
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "enable-cuda-compat", "--host-cuda-version=13.1"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+						{
+							HookName: "createContainer",
+							Path:     "/usr/bin/nvidia-cdi-hook",
+							Args:     []string{"nvidia-cdi-hook", "update-ldcache"},
+							Env:      []string{"NVIDIA_CTK_DEBUG=false"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		driverRoot := filepath.Join(lookupRoot, tc.rootfsFolder)
+
+		tc.lib.logger = logger
+		tc.lib.editsFactory = edits.NewFactory(edits.WithLogger(logger))
+		tc.lib.deviceNamers = []DeviceNamer{deviceNameIndex{}}
+		tc.lib.hookCreator = discover.NewHookCreator()
+
+		tc.lib.devicelib = device.New(tc.lib.nvmllib)
+
+		tc.lib.driver = root.New(root.WithDriverRoot(driverRoot))
+		tc.lib.devRoot = driverRoot
+		tc.lib.driver = root.New(root.WithDriverRoot(driverRoot), root.WithDevRoot(driverRoot))
+		tc.lib.csv.Files = []string{
+			filepath.Join(driverRoot, "/etc/nvidia-container-runtime/host-files-for-container.d/devices.csv"),
+			filepath.Join(driverRoot, "/etc/nvidia-container-runtime/host-files-for-container.d/drivers.csv"),
+		}
+		if tc.lib.csv.CompatContainerRoot == "" {
+			tc.lib.csv.CompatContainerRoot = defaultOrinCompatContainerRoot
+		}
+
+		t.Run(tc.description, func(t *testing.T) {
+			generator, err := tc.lib.DeviceSpecGenerators("all")
+
+			require.EqualValues(t, tc.expectedError, err)
+
+			if tc.expectedError != nil {
+				return
+			}
+
+			deviceSpecs, err := generator.GetDeviceSpecs()
+			require.EqualValues(t, tc.expectedSpecError, err)
+			require.EqualValues(t, tc.expectedDeviceSpecs, stripRoot(driverRoot, deviceSpecs))
+
+			commonEdits, err := tc.lib.GetCommonEdits()
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedCommonEdits, stripRoot(driverRoot, commonEdits))
+		})
+	}
+
+}
+
+func stripRoot[T any](root string, v T) T {
+	stringRep, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	stringRep = bytes.ReplaceAll(stringRep, []byte(root), []byte(""))
+
+	var modified T
+	err = json.Unmarshal(stringRep, &modified)
+	if err != nil {
+		panic(err)
+	}
+	return modified
+}
+
+// TODO: We should move this mock to go-nvml/mock.
+func mockOrinServer() nvml.Interface {
+	return &mock.Interface{
+		InitFunc: func() nvml.Return {
+			return nvml.SUCCESS
+		},
+		ShutdownFunc: func() nvml.Return {
+			return nvml.SUCCESS
+		},
+		SystemGetDriverVersionFunc: func() (string, nvml.Return) {
+			return "540.3.0", nvml.SUCCESS
+		},
+		SystemGetCudaDriverVersionFunc: func() (int, nvml.Return) {
+			return 13010, nvml.SUCCESS
+		},
+		DeviceGetCountFunc: func() (int, nvml.Return) {
+			return 1, nvml.SUCCESS
+		},
+		DeviceGetHandleByIndexFunc: func(n int) (nvml.Device, nvml.Return) {
+			if n != 0 {
+				return nil, nvml.ERROR_INVALID_ARGUMENT
+			}
+			device := &mock.Device{
+				GetUUIDFunc: func() (string, nvml.Return) {
+					return "GPU-orin", nvml.SUCCESS
+				},
+				GetNameFunc: func() (string, nvml.Return) {
+					return "Orin (nvgpu)", nvml.SUCCESS
+				},
+				GetPciInfoFunc: func() (nvml.PciInfo, nvml.Return) {
+					return nvml.PciInfo{}, nvml.ERROR_NOT_SUPPORTED
+				},
+			}
+			return device, nvml.SUCCESS
+		},
+	}
+}
+
+// TODO: We should move this mock to go-nvml/mock.
+func mockIGXServer() nvml.Interface {
+	thor := &mock.Device{
+		GetNameFunc: func() (string, nvml.Return) {
+			return "NVIDIA Thor", nvml.SUCCESS
+		},
+		GetUUIDFunc: func() (string, nvml.Return) {
+			return "GPU-0", nvml.SUCCESS
+		},
+		GetPciInfoFunc: func() (nvml.PciInfo, nvml.Return) {
+			return nvml.PciInfo{
+				Bus: 1,
+			}, nvml.SUCCESS
+		},
+	}
+	rtx := &mock.Device{
+		GetNameFunc: func() (string, nvml.Return) {
+			return "RTX Pro 6000", nvml.SUCCESS
+		},
+		GetUUIDFunc: func() (string, nvml.Return) {
+			return "GPU-1", nvml.SUCCESS
+		},
+		GetPciInfoFunc: func() (nvml.PciInfo, nvml.Return) {
+			return nvml.PciInfo{
+				Bus: 3,
+			}, nvml.SUCCESS
+		},
+		GetMinorNumberFunc: func() (int, nvml.Return) {
+			return 1, nvml.SUCCESS
+		},
+	}
+
+	return &mock.Interface{
+		InitFunc: func() nvml.Return {
+			return nvml.SUCCESS
+		},
+		ShutdownFunc: func() nvml.Return {
+			return nvml.SUCCESS
+		},
+		SystemGetDriverVersionFunc: func() (string, nvml.Return) {
+			return "540.3.0", nvml.SUCCESS
+		},
+		SystemGetCudaDriverVersionFunc: func() (int, nvml.Return) {
+			return 13010, nvml.SUCCESS
+		},
+		DeviceGetCountFunc: func() (int, nvml.Return) {
+			return 2, nvml.SUCCESS
+		},
+		DeviceGetHandleByIndexFunc: func(n int) (nvml.Device, nvml.Return) {
+			switch n {
+			case 0:
+				return thor, nvml.SUCCESS
+			case 1:
+				return rtx, nvml.SUCCESS
+			}
+			return nil, nvml.ERROR_INVALID_ARGUMENT
+		},
+		DeviceGetHandleByUUIDFunc: func(s string) (nvml.Device, nvml.Return) {
+			switch s {
+			case "GPU-0":
+				return thor, nvml.SUCCESS
+			case "GPU-1":
+				return rtx, nvml.SUCCESS
+			}
+			return nil, nvml.ERROR_INVALID_ARGUMENT
+		},
+	}
+}
