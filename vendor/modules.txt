@@ -3,20 +3,65 @@
 github.com/NVIDIA/go-nvml/pkg/dl
 github.com/NVIDIA/go-nvml/pkg/nvml
 github.com/NVIDIA/go-nvml/pkg/nvml/mock
+github.com/NVIDIA/go-nvml/pkg/nvml/mock/dgxa100
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/fsnotify/fsnotify v1.5.1
+## explicit; go 1.13
+github.com/fsnotify/fsnotify
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
+# github.com/moby/sys/capability v0.4.0
+## explicit; go 1.21
+github.com/moby/sys/capability
+# github.com/opencontainers/cgroups v0.0.6
+## explicit; go 1.23.0
+github.com/opencontainers/cgroups/devices/config
+# github.com/opencontainers/runc v1.4.0
+## explicit; go 1.24.0
+github.com/opencontainers/runc/libcontainer/devices
+# github.com/opencontainers/runtime-spec v1.3.0
+## explicit
+github.com/opencontainers/runtime-spec/specs-go
+# github.com/opencontainers/runtime-tools v0.9.1-0.20251114084447-edf4cb3d2116
+## explicit; go 1.21
+github.com/opencontainers/runtime-tools/generate
+github.com/opencontainers/runtime-tools/generate/seccomp
+github.com/opencontainers/runtime-tools/validate/capabilities
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
+# github.com/sirupsen/logrus v1.9.4
+## explicit; go 1.17
+github.com/sirupsen/logrus
+github.com/sirupsen/logrus/hooks/test
 # github.com/stretchr/testify v1.11.1
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
+# golang.org/x/mod v0.33.0
+## explicit; go 1.24.0
+golang.org/x/mod/semver
+# golang.org/x/sys v0.41.0
+## explicit; go 1.24.0
+golang.org/x/sys/unix
+golang.org/x/sys/windows
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# sigs.k8s.io/yaml v1.4.0
+## explicit; go 1.12
+sigs.k8s.io/yaml
+sigs.k8s.io/yaml/goyaml.v2
+# tags.cncf.io/container-device-interface v1.1.0
+## explicit; go 1.21
+tags.cncf.io/container-device-interface/internal/validation
+tags.cncf.io/container-device-interface/internal/validation/k8s
+tags.cncf.io/container-device-interface/pkg/cdi
+tags.cncf.io/container-device-interface/pkg/parser
+# tags.cncf.io/container-device-interface/specs-go v1.1.0
+## explicit; go 1.19
+tags.cncf.io/container-device-interface/specs-go

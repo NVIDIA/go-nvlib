@@ -1,0 +1,71 @@
+/**
+# Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+**/
+
+package test
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+)
+
+// GetModuleRoot returns the path to the root of the go module.
+func GetModuleRoot() (string, error) {
+	_, filename, _, _ := runtime.Caller(0)
+
+	return hasGoMod(filename)
+}
+
+// PrependToPath prefixes the specified additional paths to the PATH environment variable.
+func PrependToPath(additionalPaths ...string) string {
+	if currentPath := strings.TrimSpace(os.Getenv("PATH")); currentPath != "" {
+		additionalPaths = append(additionalPaths, currentPath)
+	}
+	return strings.Join(additionalPaths, ":")
+}
+
+func hasGoMod(dir string) (string, error) {
+	if dir == "" || dir == "/" {
+		return "", fmt.Errorf("module root not found")
+	}
+
+	_, err := os.Stat(filepath.Join(dir, "go.mod"))
+	if err != nil {
+		return hasGoMod(filepath.Dir(dir))
+	}
+	return dir, nil
+}
+
+// Strip root is used to remove the specified root from the string
+// representation of any type.
+func StripRoot[T any](v T, root string) T {
+	stringRep, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	stringRep = bytes.ReplaceAll(stringRep, []byte(root), []byte(""))
+
+	var modified T
+	err = json.Unmarshal(stringRep, &modified)
+	if err != nil {
+		panic(err)
+	}
+	return modified
+}

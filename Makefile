@@ -96,6 +96,8 @@ build-image: $(DOCKERFILE_DEVEL)
 		-f $(DOCKERFILE_DEVEL) \
 		.
 
+docker-test: BUILDIMAGE = $(TEST_BUILDIMAGE)
+
 $(DOCKER_TARGETS): docker-%:
 	@echo "Running 'make $(*)' in container image $(BUILDIMAGE)"
 	$(DOCKER) run \
