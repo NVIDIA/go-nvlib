@@ -167,6 +167,24 @@ func createNVIDIAgpuFiles(deviceDir string) error {
 		return err
 	}
 
+	subsystemVendor, err := os.Create(filepath.Join(deviceDir, "subsystem_vendor"))
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(subsystemVendor, "0x%x", PCINvidiaVendorID)
+	if err != nil {
+		return err
+	}
+
+	subsystemDevice, err := os.Create(filepath.Join(deviceDir, "subsystem_device"))
+	if err != nil {
+		return err
+	}
+	_, err = subsystemDevice.WriteString("0x16c0")
+	if err != nil {
+		return err
+	}
+
 	_, err = os.Create(filepath.Join(deviceDir, "nvidia"))
 	if err != nil {
 		return err
