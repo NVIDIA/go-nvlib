@@ -18,6 +18,7 @@ package device
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
@@ -48,6 +49,7 @@ type device struct {
 }
 
 var _ Device = &device{}
+var pciBusIDPrefixRE = regexp.MustCompile(`^0{4}[0-9a-f]{4}:`)
 
 // NewDevice builds a new Device from an nvml.Device.
 func (d *devicelib) NewDevice(dev nvml.Device) (Device, error) {
@@ -193,7 +195,7 @@ func (d *device) GetPCIBusID() (string, error) {
 	}
 	id := strings.ToLower(string(bytes))
 
-	if id != "0000" {
+	if pciBusIDPrefixRE.MatchString(id) {
 		id = strings.TrimPrefix(id, "0000")
 	}
 
