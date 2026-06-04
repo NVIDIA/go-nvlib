@@ -5,7 +5,10 @@ go 1.25.0
 require (
 	github.com/NVIDIA/go-nvml v0.13.1-0
 	github.com/google/uuid v1.6.0
+	github.com/klauspost/compress v1.18.6
+	github.com/pmorjan/kmod v1.1.1
 	github.com/stretchr/testify v1.11.1
+	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/sys v0.46.0
 )
 

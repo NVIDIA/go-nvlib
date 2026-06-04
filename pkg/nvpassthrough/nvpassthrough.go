@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pmorjan/kmod"
+
 	"github.com/NVIDIA/go-nvlib/pkg/nvpci"
 )
 
@@ -43,7 +45,7 @@ type Interface interface {
 
 type nvpassthrough struct {
 	logger            basicLogger
-	hostRoot          string
+	libModulesRoot    string
 	nvpciLib          nvpci.Interface
 	loadKernelModules bool
 }
@@ -64,8 +66,8 @@ func New(opts ...Option) Interface {
 	if n.logger == nil {
 		n.logger = &nullLogger{}
 	}
-	if n.hostRoot == "" {
-		n.hostRoot = "/"
+	if n.libModulesRoot == "" {
+		n.libModulesRoot = libModulesRoot
 	}
 	if n.nvpciLib == nil {
 		n.nvpciLib = nvpci.New()
@@ -84,12 +86,10 @@ func WithLogger(logger basicLogger) Option {
 	}
 }
 
-// WithHostRoot provides an Option to set the path to the host root filesystem.
-// The path is only used when the WithLoadKernelModules option is also enabled.
-// The path is assumed to be a chroot-able filesystem.
-func WithHostRoot(hostRoot string) Option {
+// WithLibModulesRoot provides an Option to set the path to the modules root.
+func WithLibModulesRoot(libModulesRoot string) Option {
 	return func(w *nvpassthrough) {
-		w.hostRoot = hostRoot
+		w.libModulesRoot = libModulesRoot
 	}
 }
 
@@ -128,7 +128,7 @@ func (n *nvpassthrough) FindBestVFIOVariant(address string) (string, error) {
 		return "", fmt.Errorf("device at %q is not an NVIDIA PCI device", address)
 	}
 
-	vfioAliases, err := getVFIOAliases()
+	vfioAliases, err := n.getVFIOAliases()
 	if err != nil {
 		return "", fmt.Errorf("failed to get vfio_pci aliases in modules.alias file: %w", err)
 	}
@@ -179,8 +179,14 @@ func (n *nvpassthrough) BindToVFIODriver(address string) error {
 	}
 
 	if n.loadKernelModules {
-		km := newKernelModules(n.hostRoot)
-		if err := km.load(vfioDriverName); err != nil {
+		k, err := kmod.New(
+			kmod.SetInitFunc(modInitFunc),
+			kmod.SetRootDir(n.libModulesRoot),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to initialize kmod library: %w", err)
+		}
+		if err := k.Load(vfioDriverName, "", 0); err != nil {
 			return fmt.Errorf("failed to load %q driver: %w", vfioDriverName, err)
 		}
 	}
