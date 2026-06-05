@@ -276,12 +276,12 @@ func (n *nvpassthrough) Unbind(address string) error {
 
 func bind(address string, driver string) error {
 	driverOverridePath := filepath.Join(pciDevicesRoot, address, "driver_override")
-	if err := os.WriteFile(driverOverridePath, []byte(driver), 0644); err != nil {
+	if err := writeFile(driverOverridePath, driver); err != nil {
 		return fmt.Errorf("failed to set driver_override for %s: %w", address, err)
 	}
 
 	bindPath := filepath.Join(pciDriversRoot, driver, "bind")
-	if err := os.WriteFile(bindPath, []byte(address), 0644); err != nil {
+	if err := writeFile(bindPath, address); err != nil {
 		return fmt.Errorf("failed to bind %s to %s: %w", address, driver, err)
 	}
 
@@ -290,7 +290,7 @@ func bind(address string, driver string) error {
 
 func unbind(address string) error {
 	driverOverridePath := filepath.Join(pciDevicesRoot, address, "driver_override")
-	if err := os.WriteFile(driverOverridePath, []byte("\n"), 0644); err != nil {
+	if err := writeFile(driverOverridePath, "\n"); err != nil {
 		return fmt.Errorf("failed to clear driver_override for %s: %w", address, err)
 	}
 
@@ -306,7 +306,7 @@ func unbind(address string) error {
 	driverName := filepath.Base(driverLink)
 
 	unbindPath := filepath.Join(driverPath, "unbind")
-	if err := os.WriteFile(unbindPath, []byte(address), 0644); err != nil {
+	if err := writeFile(unbindPath, address); err != nil {
 		return fmt.Errorf("failed to unbind %s from %s: %w", address, driverName, err)
 	}
 
@@ -364,4 +364,16 @@ func getDriver(devicePath string) (string, error) {
 		return filepath.Base(driver), nil
 	}
 	return "", err
+}
+
+func writeFile(path string, s string) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open file for writing: %w", err)
+	}
+	defer f.Close()
+	if _, err = f.WriteString(s); err != nil {
+		return fmt.Errorf("failed writing to file: %w", err)
+	}
+	return nil
 }
