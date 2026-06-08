@@ -28,7 +28,7 @@ import (
 func pciInfoWithBusID(busID string) nvml.PciInfo {
 	var info nvml.PciInfo
 	for i := 0; i < len(busID) && i < len(info.BusId); i++ {
-		info.BusId[i] = uint8(busID[i])
+		info.BusId[i] = int8(busID[i])
 	}
 	return info
 }
