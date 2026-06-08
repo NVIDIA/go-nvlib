@@ -1,14 +1,12 @@
 module github.com/NVIDIA/go-nvlib
 
-go 1.24.0
-
-toolchain go1.24.12
+go 1.25.0
 
 require (
 	github.com/NVIDIA/go-nvml v0.13.0-1
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sys v0.40.0
+	golang.org/x/sys v0.45.0
 )
 
 require (
