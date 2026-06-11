@@ -132,13 +132,13 @@ func getKernelVersion() (string, error) {
 	return string(release), nil
 }
 
-func getVFIOAliases() ([]vfioAlias, error) {
+func (n *nvpassthrough) getVFIOAliases() ([]vfioAlias, error) {
 	kernelVersion, err := getKernelVersion()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get kernel version: %w", err)
 	}
 
-	modulesAliasFilePath := filepath.Join(libModulesRoot, kernelVersion, "modules.alias")
+	modulesAliasFilePath := filepath.Join(n.libModulesRoot, kernelVersion, "modules.alias")
 	modulesAliasContent, err := os.ReadFile(modulesAliasFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", modulesAliasFilePath, err)
