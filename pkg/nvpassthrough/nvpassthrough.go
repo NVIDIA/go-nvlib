@@ -42,9 +42,10 @@ type Interface interface {
 }
 
 type nvpassthrough struct {
-	logger   basicLogger
-	hostRoot string
-	nvpciLib nvpci.Interface
+	logger            basicLogger
+	hostRoot          string
+	nvpciLib          nvpci.Interface
+	loadKernelModules bool
 }
 
 var _ Interface = (*nvpassthrough)(nil)
@@ -84,6 +85,8 @@ func WithLogger(logger basicLogger) Option {
 }
 
 // WithHostRoot provides an Option to set the path to the host root filesystem.
+// The path is only used when the WithLoadKernelModules option is also enabled.
+// The path is assumed to be a chroot-able filesystem.
 func WithHostRoot(hostRoot string) Option {
 	return func(w *nvpassthrough) {
 		w.hostRoot = hostRoot
@@ -94,6 +97,15 @@ func WithHostRoot(hostRoot string) Option {
 func WithNvpciLib(lib nvpci.Interface) Option {
 	return func(w *nvpassthrough) {
 		w.nvpciLib = lib
+	}
+}
+
+// WithLoadKernelModules provides an Option for opting-in to loading
+// kernel modules before binding NVIDIA PCI devices to them. By default,
+// this behavior is disabled.
+func WithLoadKernelModules(loadKernelModules bool) Option {
+	return func(w *nvpassthrough) {
+		w.loadKernelModules = loadKernelModules
 	}
 }
 
@@ -166,9 +178,11 @@ func (n *nvpassthrough) BindToVFIODriver(address string) error {
 		return fmt.Errorf("failed to find best vfio variant driver: %w", err)
 	}
 
-	km := newKernelModules(n.hostRoot)
-	if err := km.load(vfioDriverName); err != nil {
-		return fmt.Errorf("failed to load %q driver: %w", vfioDriverName, err)
+	if n.loadKernelModules {
+		km := newKernelModules(n.hostRoot)
+		if err := km.load(vfioDriverName); err != nil {
+			return fmt.Errorf("failed to load %q driver: %w", vfioDriverName, err)
+		}
 	}
 
 	// (cdesiniotis) Module names in the modules.alias file will only ever contain
