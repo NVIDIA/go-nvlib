@@ -309,7 +309,9 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 		if err != nil {
 			return nil, fmt.Errorf("unable to convert subsystem vendor string to uint16: %v", subsystemVendorStr)
 		}
-	case !os.IsNotExist(err):
+	case os.IsNotExist(err):
+		p.logger.Warningf("subsystem_vendor file not found for %s", address)
+	default:
 		return nil, fmt.Errorf("unable to read PCI subsystem vendor id for %s: %v", address, err)
 	}
 
@@ -322,7 +324,9 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 		if err != nil {
 			return nil, fmt.Errorf("unable to convert subsystem device string to uint16: %v", subsystemDeviceStr)
 		}
-	case !os.IsNotExist(err):
+	case os.IsNotExist(err):
+		p.logger.Warningf("subsystem_device file not found for %s", address)
+	default:
 		return nil, fmt.Errorf("unable to read PCI subsystem device id for %s: %v", address, err)
 	}
 

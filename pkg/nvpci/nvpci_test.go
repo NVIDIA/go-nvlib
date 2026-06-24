@@ -111,6 +111,63 @@ func TestNvpciSubsystemMissing(t *testing.T) {
 	require.Equal(t, uint16(0), devices[0].SubsystemDevice, "SubsystemDevice should default to 0 when sysfs file is absent")
 }
 
+func TestNvpciSubsystemPartial(t *testing.T) {
+	testCases := []struct {
+		Description     string
+		RemoveFile      string
+		SubsystemVendor uint16
+		SubsystemDevice uint16
+	}{
+		{
+			Description:     "subsystem_vendor missing",
+			RemoveFile:      "subsystem_vendor",
+			SubsystemVendor: 0,
+			SubsystemDevice: 0x16c0,
+		},
+		{
+			Description:     "subsystem_device missing",
+			RemoveFile:      "subsystem_device",
+			SubsystemVendor: 0x10de,
+			SubsystemDevice: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Description, func(t *testing.T) {
+			nvpci, err := NewMockNvpci()
+			require.Nil(t, err, "Error creating NewMockNvpci")
+			defer nvpci.Cleanup()
+
+			err = nvpci.AddMockA100("0000:80:05.1", 0, nil)
+			require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+			deviceDir := filepath.Join(nvpci.pciDevicesRoot, "0000:80:05.1")
+			require.NoError(t, os.Remove(filepath.Join(deviceDir, tc.RemoveFile)))
+
+			devices, err := nvpci.GetGPUs()
+			require.Nil(t, err, "Error getting GPUs")
+			require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
+			require.Equal(t, tc.SubsystemVendor, devices[0].SubsystemVendor, "Wrong SubsystemVendor for device")
+			require.Equal(t, tc.SubsystemDevice, devices[0].SubsystemDevice, "Wrong SubsystemDevice for device")
+		})
+	}
+}
+
+func TestNvpciSubsystemMalformed(t *testing.T) {
+	nvpci, err := NewMockNvpci()
+	require.Nil(t, err, "Error creating NewMockNvpci")
+	defer nvpci.Cleanup()
+
+	err = nvpci.AddMockA100("0000:80:05.1", 0, nil)
+	require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+	deviceDir := filepath.Join(nvpci.pciDevicesRoot, "0000:80:05.1")
+	require.NoError(t, os.WriteFile(filepath.Join(deviceDir, "subsystem_vendor"), []byte("notanid"), 0644))
+
+	_, err = nvpci.GetGPUs()
+	require.Error(t, err, "Expected error when subsystem_vendor contents are malformed")
+}
+
 func TestNvpciIOMMUFD(t *testing.T) {
 	testCases := []struct {
 		Description string
