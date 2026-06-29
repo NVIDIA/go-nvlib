@@ -107,20 +107,22 @@ func (s *SriovInfo) IsVF() bool {
 
 // NvidiaPCIDevice represents a PCI device for an NVIDIA product.
 type NvidiaPCIDevice struct {
-	Path       string
-	Address    string
-	Vendor     uint16
-	Class      uint32
-	ClassName  string
-	Device     uint16
-	DeviceName string
-	Driver     string
-	IommuGroup int
-	IommuFD    string
-	NumaNode   int
-	Config     *ConfigSpace
-	Resources  MemoryResources
-	SriovInfo  SriovInfo
+	Path            string
+	Address         string
+	Vendor          uint16
+	Class           uint32
+	ClassName       string
+	Device          uint16
+	SubsystemVendor uint16
+	SubsystemDevice uint16
+	DeviceName      string
+	Driver          string
+	IommuGroup      int
+	IommuFD         string
+	NumaNode        int
+	Config          *ConfigSpace
+	Resources       MemoryResources
+	SriovInfo       SriovInfo
 }
 
 // IsVGAController if class == 0x300.
@@ -298,6 +300,36 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 		return nil, fmt.Errorf("unable to convert device string to uint16: %v", deviceStr)
 	}
 
+	var subsystemVendorID uint64
+	subsystemVendor, err := os.ReadFile(path.Join(devicePath, "subsystem_vendor"))
+	switch {
+	case err == nil:
+		subsystemVendorStr := strings.TrimSpace(string(subsystemVendor))
+		subsystemVendorID, err = strconv.ParseUint(subsystemVendorStr, 0, 16)
+		if err != nil {
+			return nil, fmt.Errorf("unable to convert subsystem vendor string to uint16: %v", subsystemVendorStr)
+		}
+	case os.IsNotExist(err):
+		p.logger.Warningf("subsystem_vendor file not found for %s", address)
+	default:
+		return nil, fmt.Errorf("unable to read PCI subsystem vendor id for %s: %v", address, err)
+	}
+
+	var subsystemDeviceID uint64
+	subsystemDevice, err := os.ReadFile(path.Join(devicePath, "subsystem_device"))
+	switch {
+	case err == nil:
+		subsystemDeviceStr := strings.TrimSpace(string(subsystemDevice))
+		subsystemDeviceID, err = strconv.ParseUint(subsystemDeviceStr, 0, 16)
+		if err != nil {
+			return nil, fmt.Errorf("unable to convert subsystem device string to uint16: %v", subsystemDeviceStr)
+		}
+	case os.IsNotExist(err):
+		p.logger.Warningf("subsystem_device file not found for %s", address)
+	default:
+		return nil, fmt.Errorf("unable to read PCI subsystem device id for %s: %v", address, err)
+	}
+
 	driver, err := getDriver(devicePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to detect driver for %s: %w", address, err)
@@ -391,20 +423,22 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 	}
 
 	nvdevice := &NvidiaPCIDevice{
-		Path:       devicePath,
-		Address:    address,
-		Vendor:     uint16(vendorID),
-		Class:      uint32(classID),
-		Device:     uint16(deviceID),
-		Driver:     driver,
-		IommuGroup: int(iommuGroup),
-		IommuFD:    iommuFD,
-		NumaNode:   int(numaNode),
-		Config:     config,
-		Resources:  resources,
-		DeviceName: deviceName,
-		ClassName:  className,
-		SriovInfo:  sriovInfo,
+		Path:            devicePath,
+		Address:         address,
+		Vendor:          uint16(vendorID),
+		Class:           uint32(classID),
+		Device:          uint16(deviceID),
+		SubsystemVendor: uint16(subsystemVendorID),
+		SubsystemDevice: uint16(subsystemDeviceID),
+		Driver:          driver,
+		IommuGroup:      int(iommuGroup),
+		IommuFD:         iommuFD,
+		NumaNode:        int(numaNode),
+		Config:          config,
+		Resources:       resources,
+		DeviceName:      deviceName,
+		ClassName:       className,
+		SriovInfo:       sriovInfo,
 	}
 
 	// Cache physical functions only as VF can't be a root device.
