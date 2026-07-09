@@ -95,6 +95,8 @@ func (d *device) GetArchitectureAsString() (string, error) {
 		return "Hopper", nil
 	case nvml.DEVICE_ARCH_BLACKWELL:
 		return "Blackwell", nil
+	case nvml.DEVICE_ARCH_RUBIN:
+		return "Rubin", nil
 	case nvml.DEVICE_ARCH_UNKNOWN:
 		return "Unknown", nil
 	}
