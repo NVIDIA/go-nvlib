@@ -37,6 +37,9 @@ CONTROLLER_GEN_VERSION ?= v0.9.2
 GOLANGCI_LINT_VERSION ?= v1.52.0
 MOQ_VERSION ?= v0.3.4
 
+# Not image-only like the block above: installed on the host by 'make third-party-notices'.
+GO_LICENSES_VERSION ?= v2.0.1
+
 BUILDIMAGE ?= ghcr.io/nvidia/k8s-test-infra:devel-go$(GOLANG_VERSION)
 DOCKERFILE_DEVEL := "images/devel/Dockerfile"
 K8S_TEST_INFRA := "https://github.com/NVIDIA/k8s-test-infra.git"
