@@ -22,7 +22,7 @@ VERSION ?= $(word 1,$(PARTS))
 # vVERSION represents the version with a guaranteed v-prefix
 vVERSION := v$(VERSION:v%=%)
 
-GOLANG_VERSION ?= 1.25.6
+GOLANG_VERSION ?= 1.27.1
 
 ifeq ($(IMAGE),)
 REGISTRY ?= nvidia
