@@ -17,7 +17,9 @@
 package nvpassthrough
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -362,13 +364,22 @@ func getAuxDevices(devicesRoot string, device *nvpci.NvidiaPCIDevice) ([]*nvidia
 		}
 		path := filepath.Join(devicesRoot, address)
 		if _, err := os.Stat(path); err != nil {
-			// The function is not present on this host; there is nothing to bind.
-			return nil
+			if errors.Is(err, fs.ErrNotExist) {
+				// The function is not present on this host; there is nothing to bind.
+				return nil
+			}
+			return fmt.Errorf("failed to stat auxiliary device %s: %w", address, err)
 		}
 		// Auxiliary functions of a GPU are by definition the same vendor. Checking guards
 		// against acting on a device we did not intend to touch.
 		isNvidia, err := isNvidiaVendor(path)
-		if err != nil || !isNvidia {
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			// The function was removed between the stat above and this read.
+			return nil
+		case err != nil:
+			return fmt.Errorf("failed to check vendor for auxiliary device %s: %w", address, err)
+		case !isNvidia:
 			return nil
 		}
 		driver, err := getDriver(path)

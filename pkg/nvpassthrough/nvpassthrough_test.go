@@ -223,3 +223,39 @@ func TestGetAuxDevicesReportsCurrentDriver(t *testing.T) {
 		"0000:16:00.3": "",
 	}, got)
 }
+
+func TestGetAuxDevicesMalformedVendorIsAnError(t *testing.T) {
+	funcs := []pciFunc{
+		{"0000:16:00.0", nvpci.PCINvidiaVendorID, "vfio-pci"},
+		{"0000:16:00.1", nvpci.PCINvidiaVendorID, "snd_hda_intel"},
+	}
+	devicesRoot := newFakePCITree(t, funcs, "0000:16:00.0", nil)
+	require.NoError(t, os.WriteFile(
+		filepath.Join(devicesRoot, "0000:16:00.1", "vendor"), []byte("not-a-vendor-id\n"), 0644))
+
+	dev := &nvpci.NvidiaPCIDevice{
+		Address: "0000:16:00.0",
+		Path:    filepath.Join(devicesRoot, "0000:16:00.0"),
+		Class:   nvpci.PCIVgaControllerClass,
+	}
+
+	_, err := getAuxDevices(devicesRoot, dev)
+	require.ErrorContains(t, err, "0000:16:00.1")
+}
+
+// A consumer link may name a function that is not present, and a function may be
+// removed while the tree is being walked. Both are tolerated and simply skipped.
+func TestGetAuxDevicesToleratesAbsentFunction(t *testing.T) {
+	funcs := []pciFunc{{"0000:16:00.0", nvpci.PCINvidiaVendorID, "vfio-pci"}}
+	devicesRoot := newFakePCITree(t, funcs, "0000:16:00.0", []string{"0000:16:00.1"})
+
+	dev := &nvpci.NvidiaPCIDevice{
+		Address: "0000:16:00.0",
+		Path:    filepath.Join(devicesRoot, "0000:16:00.0"),
+		Class:   nvpci.PCIVgaControllerClass,
+	}
+
+	auxDevs, err := getAuxDevices(devicesRoot, dev)
+	require.NoError(t, err)
+	require.Empty(t, auxDevs)
+}
