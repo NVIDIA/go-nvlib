@@ -549,3 +549,11 @@ func TestGetMigMemorySizeGB(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchesKeepsAttributeOrder(t *testing.T) {
+	profile, err := parseMigProfile("1g.5gb+me,gfx")
+	require.NoError(t, err)
+	require.Equal(t, "1g.5gb+me,gfx", profile.String())
+	require.True(t, profile.Matches("1g.5gb+gfx,me"))
+	require.Equal(t, "1g.5gb+me,gfx", profile.String())
+}
