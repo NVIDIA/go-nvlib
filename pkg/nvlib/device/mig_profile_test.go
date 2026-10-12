@@ -61,7 +61,8 @@ func newMockDeviceLib() Interface {
 				nvml.GPU_INSTANCE_PROFILE_2_SLICE_NO_ME,
 				nvml.GPU_INSTANCE_PROFILE_2_SLICE_ALL_ME:
 				info.MemorySizeMB = 10 * 1024
-			case nvml.GPU_INSTANCE_PROFILE_3_SLICE:
+			case nvml.GPU_INSTANCE_PROFILE_3_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_3_SLICE_GFX:
 				info.MemorySizeMB = 20 * 1024
 			case nvml.GPU_INSTANCE_PROFILE_4_SLICE,
 				nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX:
@@ -556,4 +557,50 @@ func TestMatchesKeepsAttributeOrder(t *testing.T) {
 	require.Equal(t, "1g.5gb+me,gfx", profile.String())
 	require.True(t, profile.Matches("1g.5gb+gfx,me"))
 	require.Equal(t, "1g.5gb+me,gfx", profile.String())
+}
+
+func TestNewMigProfileAcceptsEveryGraphicsSliceWidth(t *testing.T) {
+	// The graphics variants are IDs of their own, and nvml has had one for every
+	// slice width since GPU_INSTANCE_PROFILE_3_SLICE_GFX arrived and raised
+	// GPU_INSTANCE_PROFILE_COUNT to 18. Device.VisitMigProfiles walks up to that
+	// count and returns hard on the first ID NewMigProfile does not know, so a
+	// gap here takes every profile lookup down with it on hardware that reports
+	// the missing profile as supported.
+	testCases := []struct {
+		giProfileID int
+		expected    string
+	}{
+		{nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX, "1g.5gb+gfx"},
+		{nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX, "2g.10gb+gfx"},
+		{nvml.GPU_INSTANCE_PROFILE_3_SLICE_GFX, "3g.20gb+gfx"},
+		{nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX, "4g.20gb+gfx"},
+	}
+
+	d := &devicelib{}
+	for _, tc := range testCases {
+		t.Run(tc.expected, func(t *testing.T) {
+			ciProfileID := map[int]int{
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX: nvml.COMPUTE_INSTANCE_PROFILE_1_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX: nvml.COMPUTE_INSTANCE_PROFILE_2_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_3_SLICE_GFX: nvml.COMPUTE_INSTANCE_PROFILE_3_SLICE,
+				nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX: nvml.COMPUTE_INSTANCE_PROFILE_4_SLICE,
+			}[tc.giProfileID]
+			memoryMB := map[int]uint64{
+				nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX: 5 * 1024,
+				nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX: 10 * 1024,
+				nvml.GPU_INSTANCE_PROFILE_3_SLICE_GFX: 20 * 1024,
+				nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX: 20 * 1024,
+			}[tc.giProfileID]
+
+			profile, err := d.NewMigProfile(
+				tc.giProfileID,
+				ciProfileID,
+				nvml.COMPUTE_INSTANCE_ENGINE_PROFILE_SHARED,
+				memoryMB,
+				40*1024*1024*1024,
+			)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, profile.String())
+		})
+	}
 }

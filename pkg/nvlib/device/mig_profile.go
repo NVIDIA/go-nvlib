@@ -74,7 +74,8 @@ func (d *devicelib) NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, 
 		nvml.GPU_INSTANCE_PROFILE_2_SLICE_NO_ME,
 		nvml.GPU_INSTANCE_PROFILE_2_SLICE_ALL_ME:
 		giSlices = 2
-	case nvml.GPU_INSTANCE_PROFILE_3_SLICE:
+	case nvml.GPU_INSTANCE_PROFILE_3_SLICE,
+		nvml.GPU_INSTANCE_PROFILE_3_SLICE_GFX:
 		giSlices = 3
 	case nvml.GPU_INSTANCE_PROFILE_4_SLICE,
 		nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX:
@@ -121,6 +122,7 @@ func (d *devicelib) NewMigProfile(giProfileID, ciProfileID, ciEngProfileID int, 
 		attrs = append(attrs, AttributeMediaExtensionsAll)
 	case nvml.GPU_INSTANCE_PROFILE_1_SLICE_GFX,
 		nvml.GPU_INSTANCE_PROFILE_2_SLICE_GFX,
+		nvml.GPU_INSTANCE_PROFILE_3_SLICE_GFX,
 		nvml.GPU_INSTANCE_PROFILE_4_SLICE_GFX:
 		attrs = append(attrs, AttributeGraphics)
 	}
