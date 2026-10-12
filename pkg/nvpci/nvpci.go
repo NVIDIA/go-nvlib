@@ -382,7 +382,7 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 		}
 	}
 
-	pciDB := pciids.NewDB()
+	pciDB := pciids.NewDB(pciids.WithFilePath(p.pcidbPath))
 
 	deviceName, err := pciDB.GetDeviceName(uint16(vendorID), uint16(deviceID))
 	if err != nil {
