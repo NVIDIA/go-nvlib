@@ -566,6 +566,12 @@ func getDriver(devicePath string) (string, error) {
 
 func getIOMMUFD(devicePath string) (string, error) {
 	content, err := os.ReadDir(path.Join(devicePath, "vfio-dev"))
+	// The vfio-dev directory only exists for devices that are bound to a VFIO
+	// driver on a kernel with VFIO device cdev support. For every other device,
+	// such as a GPU bound to the nvidia driver, there is no IOMMU FD to report.
+	if errors.Is(err, os.ErrNotExist) {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
