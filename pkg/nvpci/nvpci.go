@@ -348,7 +348,10 @@ func (p *nvpci) getNvidiaDeviceByPciBusID(address string, cache map[string]*Nvid
 
 	iommuFD, err := getIOMMUFD(devicePath)
 	if err != nil {
-		// log a warning, do not return an error as this host may not have iommufd configured/supported
+		// A device without a vfio-dev directory (not bound to a VFIO driver, or
+		// a host without iommufd support) does not get here, see getIOMMUFD.
+		// Anything else is unexpected, but the IOMMU FD is optional, so log a
+		// warning instead of returning an error.
 		p.logger.Warningf("unable to detect IOMMU FD for %s: %v", address, err)
 	}
 
