@@ -292,3 +292,32 @@ func TestNvpciSRIOV(t *testing.T) {
 		})
 	}
 }
+
+func TestNvpciReadsTheConfiguredPCIDatabase(t *testing.T) {
+	mock, err := NewMockNvpci()
+	require.Nil(t, err, "Error creating NewMockNvpci")
+	defer mock.Cleanup()
+
+	err = mock.AddMockA100("0000:80:05.1", 0, nil)
+	require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+	// WithFilePath puts this path ahead of the distro locations, so the name
+	// below wins wherever the test runs. Without the option being passed on,
+	// the name comes from the host's pci.ids or the embedded snapshot.
+	const deviceName = "Device named by the configured database"
+	pcidb := filepath.Join(t.TempDir(), "pci.ids")
+	err = os.WriteFile(
+		pcidb,
+		[]byte("10de  NVIDIA Corporation\n\t20bf  "+deviceName+"\n"),
+		0o600,
+	)
+	require.Nil(t, err, "Error writing the pci.ids file")
+
+	devices, err := New(
+		WithPCIDevicesRoot(mock.pciDevicesRoot),
+		WithPCIDatabasePath(pcidb),
+	).GetGPUs()
+	require.Nil(t, err, "Error getting GPUs")
+	require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
+	require.Equal(t, deviceName, devices[0].DeviceName, "Device name did not come from the configured database")
+}
