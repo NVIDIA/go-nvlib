@@ -17,6 +17,7 @@
 package nvpci
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -194,6 +195,57 @@ func TestNvpciIOMMUFD(t *testing.T) {
 			require.Equal(t, "vfio8", devices[0].IommuFD, "Wrong IOMMUFD found for device")
 		})
 	}
+}
+
+type recordingLogger struct {
+	warnings []string
+}
+
+func (l *recordingLogger) Warningf(format string, v ...interface{}) {
+	l.warnings = append(l.warnings, fmt.Sprintf(format, v...))
+}
+
+func TestNvpciIOMMUFDNotBoundToVFIO(t *testing.T) {
+	nvpci, err := NewMockNvpci()
+	require.Nil(t, err, "Error creating NewMockNvpci")
+	defer nvpci.Cleanup()
+
+	logger := &recordingLogger{}
+	nvpci.logger = logger
+
+	err = nvpci.AddMockA100("0000:80:05.1", 0, nil)
+	require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+	// A GPU that is bound to the nvidia driver has no vfio-dev directory.
+	deviceDir := filepath.Join(nvpci.pciDevicesRoot, "0000:80:05.1")
+	require.NoError(t, os.RemoveAll(filepath.Join(deviceDir, "vfio-dev")))
+
+	devices, err := nvpci.GetGPUs()
+	require.Nil(t, err, "Error getting GPUs")
+	require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
+	require.Equal(t, "", devices[0].IommuFD, "IOMMUFD should be empty without a vfio-dev directory")
+	require.Empty(t, logger.warnings, "No warning expected for a device without a vfio-dev directory")
+}
+
+func TestNvpciIOMMUFDEmptyVFIODev(t *testing.T) {
+	nvpci, err := NewMockNvpci()
+	require.Nil(t, err, "Error creating NewMockNvpci")
+	defer nvpci.Cleanup()
+
+	logger := &recordingLogger{}
+	nvpci.logger = logger
+
+	err = nvpci.AddMockA100("0000:80:05.1", 0, nil)
+	require.Nil(t, err, "Error adding Mock A100 device to MockNvpci")
+
+	deviceDir := filepath.Join(nvpci.pciDevicesRoot, "0000:80:05.1")
+	require.NoError(t, os.RemoveAll(filepath.Join(deviceDir, "vfio-dev", "vfio8")))
+
+	devices, err := nvpci.GetGPUs()
+	require.Nil(t, err, "Error getting GPUs")
+	require.Equal(t, 1, len(devices), "Wrong number of GPU devices")
+	require.Equal(t, "", devices[0].IommuFD, "IOMMUFD should be empty without a vfio device entry")
+	require.Equal(t, []string{"unable to detect IOMMU FD for 0000:80:05.1: no iommufd device found"}, logger.warnings)
 }
 
 func TestNvpciNUMANode(t *testing.T) {
