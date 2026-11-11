@@ -224,8 +224,34 @@ func (n *nvpassthrough) BindToVFIODriver(address string) error {
 		}
 	}
 
-	// Bind every other function of the same card. The whole IOMMU group must be bound to a
-	// vfio driver (or to nothing) before VFIO will hand it to a guest.
+	return n.bindAuxDevices(device, vfioDriverName)
+}
+
+// BindToDriver binds an NVIDIA PCI device to the driver supplied as input.
+// If the driver is a vfio driver, every other PCI function of the same card
+// is bound to it as well, as in BindToVFIODriver.
+func (n *nvpassthrough) BindToDriver(address string, driver string) error {
+	device, err := n.nvpciLib.GetNvidiaDeviceByPciBusID(address)
+	if err != nil {
+		return fmt.Errorf("failed to get NVIDIA PCI device by bus id %q: %w", address, err)
+	}
+	if device == nil {
+		return fmt.Errorf("device at %q is not an NVIDIA PCI device", address)
+	}
+
+	if err := bind(address, driver); err != nil {
+		return err
+	}
+	if !isVFIODriver(driver) {
+		return nil
+	}
+	return n.bindAuxDevices(device, driver)
+}
+
+// bindAuxDevices binds every other function of the same card to the vfio driver. The whole
+// IOMMU group must be bound to a vfio driver (or to nothing) before VFIO will hand it to a
+// guest.
+func (n *nvpassthrough) bindAuxDevices(device *nvpci.NvidiaPCIDevice, vfioDriverName string) error {
 	auxDevs, err := getAuxDevices(pciDevicesRoot, device)
 	if err != nil {
 		return fmt.Errorf("failed to get auxiliary devices for %s: %w", device.Address, err)
@@ -248,22 +274,18 @@ func (n *nvpassthrough) BindToVFIODriver(address string) error {
 	return nil
 }
 
-// BindToDriver binds an NVIDIA PCI device to the driver supplied as input.
-func (n *nvpassthrough) BindToDriver(address string, driver string) error {
-	device, err := n.nvpciLib.GetNvidiaDeviceByPciBusID(address)
-	if err != nil {
-		return fmt.Errorf("failed to get NVIDIA PCI device by bus id %q: %w", address, err)
-	}
-	if device == nil {
-		return fmt.Errorf("device at %q is not an NVIDIA PCI device", address)
-	}
-
-	return bind(address, driver)
+// isVFIODriver reports whether driver is vfio-pci or a vfio variant driver
+// such as nvgrace_gpu_vfio_pci.
+func isVFIODriver(driver string) bool {
+	return strings.Contains(strings.ReplaceAll(driver, "_", "-"), "vfio-pci")
 }
 
-// Unbind unbinds the provided NVIDIA PCI Device from
-// any driver it is currently bound to. This function also ensures
-// that every other PCI function of the same card is unbound.
+// Unbind unbinds the provided NVIDIA PCI Device from any driver it is
+// currently bound to. The other PCI functions of the same card are left
+// bound: BindToVFIODriver and BindToDriver move them to vfio together with
+// the device, and nothing binds them back to a host driver, so unbinding them
+// here would leave them without a driver after the device moves back to the
+// host. A host that keeps them on vfio for passthrough relies on this.
 func (n *nvpassthrough) Unbind(address string) error {
 	device, err := n.nvpciLib.GetNvidiaDeviceByPciBusID(address)
 	if err != nil {
@@ -275,17 +297,6 @@ func (n *nvpassthrough) Unbind(address string) error {
 
 	if err := unbind(address); err != nil {
 		return fmt.Errorf("failed to unbind device %s: %w", address, err)
-	}
-
-	// Unbind every other function of the same card, mirroring BindToVFIODriver.
-	auxDevs, err := getAuxDevices(pciDevicesRoot, device)
-	if err != nil {
-		return fmt.Errorf("failed to get auxiliary devices for %s: %w", address, err)
-	}
-	for _, auxDev := range auxDevs {
-		if err := unbind(auxDev.Address); err != nil {
-			return fmt.Errorf("failed to unbind auxiliary device %s: %w", auxDev.Address, err)
-		}
 	}
 
 	return nil
