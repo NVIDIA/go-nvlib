@@ -259,3 +259,23 @@ func TestGetAuxDevicesToleratesAbsentFunction(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, auxDevs)
 }
+
+func TestIsVFIODriver(t *testing.T) {
+	testCases := []struct {
+		driver   string
+		expected bool
+	}{
+		{driver: "vfio-pci", expected: true},
+		{driver: "vfio_pci", expected: true},
+		{driver: "nvgrace_gpu_vfio_pci", expected: true},
+		{driver: "nvgrace-gpu-vfio-pci", expected: true},
+		{driver: "nvidia", expected: false},
+		{driver: "snd_hda_intel", expected: false},
+		{driver: "", expected: false},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.driver, func(t *testing.T) {
+			require.Equal(t, tc.expected, isVFIODriver(tc.driver))
+		})
+	}
+}
