@@ -25,5 +25,5 @@ type logger interface {
 type simpleLogger struct{}
 
 func (l simpleLogger) Warningf(format string, v ...interface{}) {
-	log.Printf("WARNING: "+format, v)
+	log.Printf("WARNING: "+format, v...)
 }
